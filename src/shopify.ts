@@ -2,14 +2,14 @@
 export const SHOPIFY_CONFIG = {
   domain: 'ot3889.myshopify.com',
   storefrontAccessToken: import.meta.env.VITE_SHOPIFY_ACCESS_TOKEN,
-  apiVersion: '2024-01'
+  apiVersion: '2024-04'
 };
 
 export async function fetchShopify(query: string, variables = {}) {
   const endpoint = `https://${SHOPIFY_CONFIG.domain}/api/${SHOPIFY_CONFIG.apiVersion}/graphql.json`;
   
   if (!SHOPIFY_CONFIG.storefrontAccessToken) {
-    console.error('CRITICAL: Shopify Access Token is MISSING (undefined). Check Vercel Env Vars.');
+    console.warn('Shopify Token check: MISSING (VITE_SHOPIFY_ACCESS_TOKEN is undefined)');
   }
 
   const response = await fetch(endpoint, {
@@ -20,6 +20,13 @@ export async function fetchShopify(query: string, variables = {}) {
     },
     body: JSON.stringify({ query, variables }),
   });
+
+  if (!response.ok) {
+    console.error(`Shopify API Fetch Failed! Status: ${response.status} ${response.statusText}`);
+    const errBody = await response.text();
+    console.error('Error Body:', errBody);
+    throw new Error(`Shopify API Error: ${response.status}`);
+  }
 
   const json = await response.json();
   if (json.errors) {
