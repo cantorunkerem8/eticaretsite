@@ -1007,19 +1007,29 @@ async function handleCheckout() {
       quantity: item.quantity
     }));
 
+    console.log('Creating checkout with items:', lineItems);
+
     const data = await fetchShopify(CREATE_CHECKOUT_MUTATION, {
       input: { lineItems }
     });
 
+    if (data.checkoutCreate.checkoutUserErrors && data.checkoutCreate.checkoutUserErrors.length > 0) {
+      const firstError = data.checkoutCreate.checkoutUserErrors[0];
+      console.error('Shopify Checkout User Error:', data.checkoutCreate.checkoutUserErrors);
+      showToast(`Checkout Error: ${firstError.message}`, 'error');
+      return;
+    }
+
     const checkout = data.checkoutCreate.checkout;
     if (checkout && checkout.webUrl) {
+      console.log('Checkout created successfully! Redirecting to:', checkout.webUrl);
       window.location.href = checkout.webUrl;
     } else {
-      throw new Error("Checkout URL not found");
+      throw new Error("Checkout URL not found in response");
     }
   } catch (err) {
-    console.error(err);
-    showToast("Checkout failed. Please try again.", 'error');
+    console.error('Checkout Exception:', err);
+    showToast("Checkout failed. Please check console for details.", 'error');
   }
 }
 
