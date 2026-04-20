@@ -1,6 +1,6 @@
 
 export const SHOPIFY_CONFIG = {
-  domain: 'ot3889.myshopify.com',
+  domain: 'cd3889.myshopify.com',
   storefrontAccessToken: import.meta.env.VITE_SHOPIFY_ACCESS_TOKEN,
   apiVersion: '2024-04'
 };
