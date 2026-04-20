@@ -30,7 +30,7 @@ export async function fetchShopify(query: string, variables = {}) {
 
   const json = await response.json();
   if (json.errors) {
-    console.error('Shopify API Error:', json.errors);
+    console.error('Shopify API Error (Detailed):', JSON.stringify(json.errors, null, 2));
     throw new Error('Shopify API Error');
   }
   return json.data;
