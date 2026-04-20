@@ -8,11 +8,15 @@ export const SHOPIFY_CONFIG = {
 export async function fetchShopify(query: string, variables = {}) {
   const endpoint = `https://${SHOPIFY_CONFIG.domain}/api/${SHOPIFY_CONFIG.apiVersion}/graphql.json`;
   
+  if (!SHOPIFY_CONFIG.storefrontAccessToken) {
+    console.error('CRITICAL: Shopify Access Token is MISSING (undefined). Check Vercel Env Vars.');
+  }
+
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Shopify-Storefront-Access-Token': SHOPIFY_CONFIG.storefrontAccessToken,
+      'X-Shopify-Storefront-Access-Token': SHOPIFY_CONFIG.storefrontAccessToken || '',
     },
     body: JSON.stringify({ query, variables }),
   });
