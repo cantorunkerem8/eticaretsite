@@ -1023,8 +1023,10 @@ async function handleCheckout() {
 
     const cart = data.cartCreate.cart;
     if (cart && cart.checkoutUrl) {
-      console.log('Cart created successfully! Redirecting to:', cart.checkoutUrl);
-      window.location.href = cart.checkoutUrl;
+      // FORCE REDIRECT TO SHOPIFY DOMAIN TO AVOID SPA 404 LOOP
+      const forcedCheckoutUrl = cart.checkoutUrl.replace('www.sfuya.com', 'cd3889.myshopify.com').replace('sfuya.com', 'cd3889.myshopify.com');
+      console.log('Cart created successfully! Redirecting to:', forcedCheckoutUrl);
+      window.location.href = forcedCheckoutUrl;
     } else {
       throw new Error("Checkout URL not found in cart response");
     }
