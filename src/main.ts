@@ -1023,9 +1023,17 @@ async function handleCheckout() {
 
     const cart = data.cartCreate.cart;
     if (cart && cart.checkoutUrl) {
-      // FORCE REDIRECT TO SHOPIFY DOMAIN TO AVOID SPA 404 LOOP
-      const forcedCheckoutUrl = cart.checkoutUrl.replace('www.sfuya.com', 'cd3889.myshopify.com').replace('sfuya.com', 'cd3889.myshopify.com');
-      console.log('Cart created successfully! Redirecting to:', forcedCheckoutUrl);
+      // ROBUST REDIRECT: Ensure we ALWAYS go to the myshopify domain to break out of the SPA 404 loop
+      let forcedCheckoutUrl = cart.checkoutUrl;
+      if (forcedCheckoutUrl.startsWith('/')) {
+        forcedCheckoutUrl = `https://cd3889.myshopify.com${forcedCheckoutUrl}`;
+      } else {
+        forcedCheckoutUrl = forcedCheckoutUrl
+          .replace('www.sfuya.com', 'cd3889.myshopify.com')
+          .replace('sfuya.com', 'cd3889.myshopify.com');
+      }
+      
+      console.log('Cart created successfully! Breaking loop and redirecting to:', forcedCheckoutUrl);
       window.location.href = forcedCheckoutUrl;
     } else {
       throw new Error("Checkout URL not found in cart response");
