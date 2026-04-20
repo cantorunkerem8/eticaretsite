@@ -1655,3 +1655,4 @@ document.addEventListener('DOMContentLoaded', () => {
   initShopifyData();
   console.log('SFUYA Marketplace initialized');
 });
+// trigger deploy
