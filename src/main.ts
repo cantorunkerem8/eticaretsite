@@ -3,7 +3,7 @@ import './auth.css'
 import { products, setProducts, mapShopifyProduct } from './products'
 import type { Product } from './products'
 import { STATIC_PAGES } from './static-content'
-import { fetchShopify, GET_PRODUCTS_QUERY, CREATE_CHECKOUT_MUTATION, GET_COLLECTIONS_QUERY } from './shopify'
+import { fetchShopify, GET_PRODUCTS_QUERY, CREATE_CART_MUTATION, GET_COLLECTIONS_QUERY } from './shopify'
 
 // --- STATE MANAGEMENT ---
 interface AppState {
@@ -1002,30 +1002,31 @@ async function handleCheckout() {
   showToast("Preparing your secure checkout...", 'success');
   
   try {
-    const lineItems = state.cartItems.map(item => ({
-      variantId: item.shopifyVariantId,
+    // New Cart API format (lines instead of lineItems)
+    const lines = state.cartItems.map(item => ({
+      merchandiseId: item.shopifyVariantId,
       quantity: item.quantity
     }));
 
-    console.log('Creating checkout with items:', lineItems);
+    console.log('Creating cart with lines:', lines);
 
-    const data = await fetchShopify(CREATE_CHECKOUT_MUTATION, {
-      input: { lineItems }
+    const data = await fetchShopify(CREATE_CART_MUTATION, {
+      input: { lines }
     });
 
-    if (data.checkoutCreate.checkoutUserErrors && data.checkoutCreate.checkoutUserErrors.length > 0) {
-      const firstError = data.checkoutCreate.checkoutUserErrors[0];
-      console.error('Shopify Checkout User Error:', data.checkoutCreate.checkoutUserErrors);
+    if (data.cartCreate.userErrors && data.cartCreate.userErrors.length > 0) {
+      const firstError = data.cartCreate.userErrors[0];
+      console.error('Shopify Cart User Error:', data.cartCreate.userErrors);
       showToast(`Checkout Error: ${firstError.message}`, 'error');
       return;
     }
 
-    const checkout = data.checkoutCreate.checkout;
-    if (checkout && checkout.webUrl) {
-      console.log('Checkout created successfully! Redirecting to:', checkout.webUrl);
-      window.location.href = checkout.webUrl;
+    const cart = data.cartCreate.cart;
+    if (cart && cart.checkoutUrl) {
+      console.log('Cart created successfully! Redirecting to:', cart.checkoutUrl);
+      window.location.href = cart.checkoutUrl;
     } else {
-      throw new Error("Checkout URL not found in response");
+      throw new Error("Checkout URL not found in cart response");
     }
   } catch (err) {
     console.error('Checkout Exception:', err);

@@ -77,15 +77,14 @@ export const GET_PRODUCTS_QUERY = `
   }
 `;
 
-export const CREATE_CHECKOUT_MUTATION = `
-  mutation checkoutCreate($input: CheckoutCreateInput!) {
-    checkoutCreate(input: $input) {
-      checkout {
+export const CREATE_CART_MUTATION = `
+  mutation cartCreate($input: CartInput) {
+    cartCreate(input: $input) {
+      cart {
         id
-        webUrl
+        checkoutUrl
       }
-      checkoutUserErrors {
-        code
+      userErrors {
         field
         message
       }
