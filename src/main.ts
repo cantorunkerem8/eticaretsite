@@ -3,7 +3,7 @@ import './auth.css'
 import { products, setProducts, mapShopifyProduct } from './products'
 import type { Product } from './products'
 import { STATIC_PAGES } from './static-content'
-import { fetchShopify, GET_PRODUCTS_QUERY, CREATE_CART_MUTATION, GET_COLLECTIONS_QUERY } from './shopify'
+import { fetchShopify, SHOPIFY_CONFIG, GET_PRODUCTS_QUERY, CREATE_CART_MUTATION, GET_COLLECTIONS_QUERY, GET_SITE_SETTINGS_QUERY, GET_PAGES_QUERY, GET_MENU_QUERY } from './shopify'
 
 // --- STATE MANAGEMENT ---
 interface AppState {
@@ -23,6 +23,8 @@ interface AppState {
   coupons: Coupon[];
   activeCoupon: Coupon | null;
   collections: any[];
+  siteSettings: any;
+  shopifyPages: any[];
 }
 
 interface Coupon {
@@ -57,7 +59,9 @@ const state: AppState = {
   cookieAccepted: localStorage.getItem('sfuya_cookies') === 'accepted',
   coupons: DUMMY_COUPONS,
   activeCoupon: JSON.parse(localStorage.getItem('sfuya_active_coupon') || 'null'),
-  collections: []
+  collections: [],
+  siteSettings: null,
+  shopifyPages: []
 };
 
 // --- ROUTER & VIEW SWITCHING ---
@@ -99,7 +103,7 @@ function handleRoute() {
   dynamicView?.classList.add('auth-hidden');
 
   // Update active nav link
-  document.querySelectorAll('.nav-links a').forEach(link => {
+  document.querySelectorAll('#nav-links-list a').forEach(link => {
     link.classList.remove('active');
     const href = link.getAttribute('href');
     if (href === path || 
@@ -170,8 +174,9 @@ function handleRoute() {
     renderCouponsPage();
     window.scrollTo(0, 0);
   }
-  else if (STATIC_PAGES[slug]) {
-    document.title = `SFUYA | ${slug.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}`;
+  else if (STATIC_PAGES[slug] || state.shopifyPages.some(p => p.handle === slug)) {
+    const pageTitle = state.shopifyPages.find(p => p.handle === slug)?.title || slug.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    document.title = `SFUYA | ${pageTitle}`;
     staticView?.classList.remove('auth-hidden');
     renderStaticPage(slug);
     window.scrollTo(0, 0);
@@ -573,9 +578,11 @@ function renderAboutPage() {
           </div>
         </div>
         <div class="legal-info-box">
-          <p><strong>Legal Name:</strong> SFUYA LIMITED</p>
-          <p><strong>Registered Address:</strong> 4th Floor, 18 St. Cross Street, London, EC1N 8UN, United Kingdom.</p>
-          <p><strong>Company Number:</strong> 13853112</p>
+          <p><strong>Legal Name:</strong> SFUYA LTD</p>
+          <p><strong>Registered Address:</strong> 25 Langton Close, Maidstone, Kent, England, ME14 5PG</p>
+          <p><strong>Warehouse Address:</strong> Aylesford Storage the Coach Works, Old Mill Lane Suite 18, Aylesford, Kent, ME20 7DT</p>
+          <p><strong>Company Number:</strong> 13367471</p>
+          <p><strong>Company Phone:</strong> +44 7462 237144</p>
         </div>
       </div>
     </div>
@@ -609,7 +616,14 @@ function renderContactPage() {
             <i class="ph ph-map-pin"></i>
             <div>
               <label>Office</label>
-              <p>London, United Kingdom</p>
+              <p>25 Langton Close, Maidstone, Kent, England, ME14 5PG</p>
+            </div>
+          </div>
+          <div class="contact-detail-item">
+            <i class="ph ph-phone"></i>
+            <div>
+              <label>Phone</label>
+              <p>+44 7462 237144</p>
             </div>
           </div>
         </div>
@@ -645,7 +659,7 @@ function renderStaticPage(slug: string) {
   const container = document.getElementById('static-view');
   if (!container) return;
 
-  const page = STATIC_PAGES[slug];
+  const page = (window as any).getPageContent(slug);
   container.innerHTML = `
     <div class="legal-page-header">
       <div class="container">
@@ -678,12 +692,12 @@ function createProductCard(product: Product) {
     <div class="product-card" data-id="${product.id}">
       <div class="product-image">
         <span class="product-badge">${product.category}</span>
-        <button class="btn-favorite-trigger card-favorite-btn ${isFav ? 'active' : ''}" data-id="${product.id}" title="Favorilere Ekle">
+        <button class="btn-favorite-trigger card-favorite-btn ${isFav ? 'active' : ''}" data-id="${product.id}" title="Add to Favorites">
           <i class="ph${isFav ? '-fill' : ''} ph-heart"></i>
         </button>
         <img src="${coverImage}" alt="${product.name}" id="img-${product.id}" loading="lazy">
         <div class="card-action-overlay">
-          <button class="add-to-cart-btn" data-id="${product.id}" title="Sepete Ekle">
+          <button class="add-to-cart-btn" data-id="${product.id}" title="Add to Cart">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
           </button>
         </div>
@@ -1655,23 +1669,133 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize Shopify Products
   async function initShopifyData() {
     try {
-      // Fetch Products
+      // 1. Fetch Products
       const prodData = await fetchShopify(GET_PRODUCTS_QUERY);
       const shopifyProducts = prodData.products.edges.map((edge: any) => mapShopifyProduct(edge.node));
       setProducts(shopifyProducts);
 
-      // Fetch Collections
+      // 2. Fetch Collections
       const collData = await fetchShopify(GET_COLLECTIONS_QUERY);
       state.collections = collData.collections.edges.map((edge: any) => edge.node);
       
+      // 3. Fetch Global Site Settings (Metaobjects)
+      try {
+        const settingsData = await fetchShopify(GET_SITE_SETTINGS_QUERY);
+        if (settingsData.metaobjects.edges.length > 0) {
+          state.siteSettings = settingsData.metaobjects.edges[0].node;
+          applySiteSettings(state.siteSettings);
+        }
+      } catch (e) {
+        console.warn('Site settings not found or Metaobjects not defined. Using fallbacks.');
+      }
+
+      // 4. Fetch Dynamic Pages
+      try {
+        const pagesData = await fetchShopify(GET_PAGES_QUERY);
+        state.shopifyPages = pagesData.pages.edges.map((edge: any) => edge.node);
+      } catch (e) {
+        console.warn('Could not fetch Shopify pages. Using local content.');
+      }
+
+      // 5. Fetch Menu
+      try {
+        const menuData = await fetchShopify(GET_MENU_QUERY);
+        if (menuData.menu && menuData.menu.items) {
+          renderNavbar(menuData.menu.items);
+        }
+      } catch (e) {
+        console.warn('Could not fetch Shopify menu. Using default navbar.');
+      }
+
       // Re-run route to render with live data
       handleRoute();
-      console.log('Shopify data loaded:', { products: shopifyProducts.length, collections: state.collections.length });
+      console.log('Shopify data loaded:', { 
+        products: shopifyProducts.length, 
+        collections: state.collections.length,
+        pages: state.shopifyPages.length
+      });
     } catch (err) {
       console.error('Failed to load Shopify data:', err);
       showToast("Store connection failed. Check your API token.", 'error');
     }
   }
+
+  function renderNavbar(menuItems: any[]) {
+    const navList = document.getElementById('nav-links-list');
+    if (!navList || !menuItems.length) return;
+
+    navList.innerHTML = menuItems.map(item => {
+      // Normalize URLs from Shopify (remove domain if internal)
+      let relativeUrl = item.url.replace(`https://${SHOPIFY_CONFIG.domain}`, '').replace(/^https?:\/\/[^\/]+/, '');
+      if (relativeUrl === '') relativeUrl = '/';
+      
+      const isActive = window.location.pathname === relativeUrl ? 'active' : '';
+      return `<li><a href="${relativeUrl}" class="${isActive}">${item.title}</a></li>`;
+    }).join('');
+  }
+
+  function applySiteSettings(settings: any) {
+    if (!settings) return;
+
+    // A. Footer Tagline
+    const taglineEl = document.getElementById('footer-tagline');
+    if (taglineEl && settings.slogan?.value) taglineEl.textContent = settings.slogan.value;
+
+    // B. Contact Info
+    const emailLink = document.getElementById('footer-email-link') as HTMLAnchorElement;
+    const emailText = document.getElementById('footer-email-text');
+    if (settings.email?.value) {
+      if (emailLink) emailLink.href = `mailto:${settings.email.value}`;
+      if (emailText) emailText.textContent = settings.email.value;
+    }
+
+    const addressText = document.getElementById('footer-address-text');
+    if (addressText && settings.address?.value) addressText.textContent = settings.address.value;
+
+    const whatsappLink = document.getElementById('footer-whatsapp-link') as HTMLAnchorElement;
+    const whatsappText = document.getElementById('footer-whatsapp-text');
+    if (settings.whatsapp?.value) {
+      if (whatsappLink) whatsappLink.href = `https://api.whatsapp.com/send?phone=${settings.whatsapp.value}&text=`;
+      if (whatsappText) whatsappText.textContent = `WhatsApp Support (${settings.whatsapp.value})`;
+    }
+
+    // C. Marketing Texts (Hero)
+    if (settings.hero?.value) {
+      try {
+        // Metaobject list fields come as JSON string of array
+        const heroArray = JSON.parse(settings.hero.value);
+        if (Array.isArray(heroArray) && heroArray.length > 0) {
+          marketingTexts.length = 0; // Clear
+          marketingTexts.push(...heroArray);
+          updateHeroText(); // Immediate update
+        }
+      } catch (e) {
+        // Single value or malformed
+        if (settings.hero.value) {
+           marketingTexts.length = 0;
+           marketingTexts.push(settings.hero.value);
+           updateHeroText();
+        }
+      }
+    }
+  }
+
+  /**
+   * Helper to get content from Shopify Pages OR local static content
+   */
+  (window as any).getPageContent = (slug: string) => {
+    // 1. Try Shopify Pages first
+    const shopifyPage = state.shopifyPages.find(p => p.handle === slug);
+    if (shopifyPage) {
+      return {
+        title: shopifyPage.title,
+        content: `<div class="legal-content">${shopifyPage.body}</div>`
+      };
+    }
+
+    // 2. Fallback to local
+    return STATIC_PAGES[slug] || { title: '404', content: 'Page Not Found' };
+  };
 
   initShopifyData();
   console.log('SFUYA Marketplace initialized');

@@ -7,7 +7,7 @@ export const SHOPIFY_CONFIG = {
 
 export async function fetchShopify(query: string, variables = {}) {
   const endpoint = `https://${SHOPIFY_CONFIG.domain}/api/${SHOPIFY_CONFIG.apiVersion}/graphql.json`;
-  
+
   if (!SHOPIFY_CONFIG.storefrontAccessToken) {
     console.warn('Shopify Token check: MISSING (VITE_SHOPIFY_ACCESS_TOKEN is undefined)');
   }
@@ -105,6 +105,59 @@ export const GET_COLLECTIONS_QUERY = `
             url
           }
         }
+      }
+    }
+  }
+`;
+
+export const GET_SITE_SETTINGS_QUERY = `
+  {
+    metaobjects(type: "site_ayarlari", first: 1) {
+      edges {
+        node {
+          id
+          handle
+          hero: field(key: "hero_mesajlari") {
+            value
+          }
+          slogan: field(key: "slogan") {
+            value
+          }
+          email: field(key: "destek_e_posta") {
+            value
+          }
+          address: field(key: "adres") {
+            value
+          }
+          whatsapp: field(key: "whatsapp_numarasi") {
+            value
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const GET_PAGES_QUERY = `
+  {
+    pages(first: 50) {
+      edges {
+        node {
+          handle
+          title
+          body
+        }
+      }
+    }
+  }
+`;
+
+export const GET_MENU_QUERY = `
+  {
+    menu(handle: "main-menu") {
+      items {
+        title
+        url
       }
     }
   }

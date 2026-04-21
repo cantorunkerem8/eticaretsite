@@ -184,9 +184,9 @@ ul {
 
 .icon-btn:hover {
   opacity: 0.6;
-  /* Yeşil yerine daha soft bir solma efekti */
+  /* Soft fading effect instead of green */
   transform: scale(1.05);
-  /* Çok hafif büyüme */
+  /* Very slight growth */
 }
 
 .cart-wrapper {
@@ -259,32 +259,22 @@ ul {
   align-items: center;
   overflow: hidden;
   color: var(--white);
+  background: url('/hero-bg.png') center/cover no-repeat;
 }
 
-.hero-video {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  min-width: 100%;
-  min-height: 100%;
-  width: auto;
-  height: auto;
-  z-index: -2;
-  transform: translate(-50%, -50%);
-  object-fit: cover;
-}
+/* Video styles removed */
 
-/* Zoom animasyonu kaldırıldı */
+/* Zoom animation removed */
 
-.video-overlay {
+.hero-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(11, 30, 51, 0.3);
-  /* Genel hafif karartma */
-  z-index: -1;
+  background: rgba(11, 30, 51, 0.4);
+  /* Darkened for readability over static image */
+  z-index: 1;
   overflow: hidden;
 }
 
@@ -333,7 +323,7 @@ ul {
   justify-content: flex-end;
   height: 100%;
   padding-bottom: 80px;
-  /* Videodaki klavye hizasına denk getirmek için */
+  /* To align with the keyboard in the video */
   text-align: center;
 }
 
@@ -343,7 +333,7 @@ ul {
 
 .hero-text h1 {
   font-size: 3rem;
-  /* Altta daha şık durması için biraz küçüldü */
+  /* Slightly smaller for a more stylish look at the bottom */
   line-height: 1;
   margin-bottom: 15px;
   text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
@@ -359,9 +349,9 @@ ul {
   letter-spacing: 0.1rem;
   text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
   white-space: nowrap;
-  /* Genişleyince aşağı kaymasını ve titremeyi önlemek için */
+  /* To prevent shifting and flickering when expanding */
   will-change: letter-spacing, opacity, filter;
-  /* Tarayıcı optimizasyonu */
+  /* Browser optimization */
 }
 
 /* Base hidden state */
@@ -376,7 +366,7 @@ ul {
 @keyframes wideToNarrow {
   0% {
     letter-spacing: 1.2rem;
-    /* Çok abartı genişlik titretme yapabilir, biraz optimize ettik */
+    /* Excessive width can cause flickering, optimized a bit */
     filter: blur(12px);
     opacity: 0;
   }
@@ -1078,6 +1068,7 @@ ul {
   color: var(--secondary);
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.4;
@@ -1117,13 +1108,13 @@ ul {
   background: var(--white);
   color: var(--secondary);
   padding: 50px 0 30px;
-  /* Daraltıldı */
+  /* Narrowed */
   position: relative;
   overflow: hidden;
   border-top: 1px solid #f0f0f0;
 }
 
-/* Sağdaki Tek Büyük SVG Konumlandırma */
+/* Positioning of the Single Large SVG on the Right */
 .footer-bg-svg {
   position: absolute;
   right: -20px;
@@ -1181,9 +1172,9 @@ ul {
 .footer-grid-main {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
-  /* Logo en solda, linkler geniş ortada, bülten sağda */
+  /* Logo on the left, links wide in the center, newsletter on the right */
   gap: 120px;
-  /* Maksimum ferahlık usta */
+  /* Maximum spaciousness */
   position: relative;
   z-index: 1;
   align-items: flex-start;
@@ -1230,9 +1221,9 @@ ul {
 .footer-links {
   display: flex;
   justify-content: space-between;
-  /* Birbirlerinden uzaklaşsınlar */
+  /* Space them out */
   gap: 60px;
-  /* Sütunlar arası temiz hava */
+  /* Fresh air between columns */
   flex-grow: 1;
 }
 
@@ -1240,9 +1231,9 @@ ul {
   font-family: 'Outfit', sans-serif;
   font-size: 1.1rem;
   margin-bottom: 25px;
-  /* Başlık ile alt linkler arası boşluk */
+  /* Space between title and sub-links */
   color: var(--secondary);
-  /* Koyu Lacivert/Siyah (Görünürlük için) */
+  /* Dark Navy/Black (for visibility) */
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -1256,9 +1247,9 @@ ul {
 
 .footer-title-with-icon svg {
   color: #8eb99f;
-  /* Soluk, asil bir yeşil (Muted Green) */
+  /* Muted, elegant green */
   width: 21px;
-  /* %10-15 civarı büyüme */
+  /* Around 10-15% growth */
   height: 21px;
   opacity: 1;
   flex-shrink: 0;
@@ -1267,7 +1258,7 @@ ul {
 .footer-links ul {
   list-style: none;
   margin-top: 20px;
-  /* Başlıktan daha fazla ayrıştırıldı */
+  /* Further differentiated from the title */
 }
 
 .footer-links ul li {
@@ -1284,7 +1275,7 @@ ul {
 
 .footer-links ul li a:hover {
   color: #7a9c86;
-  /* Soluk yeşil hover */
+  /* Muted green hover */
   transform: translateX(8px);
 }
 
@@ -1330,11 +1321,11 @@ ul {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 30px;
+  padding-top: 20px;
   border-top: 1px solid #eee;
   flex-wrap: wrap;
   gap: 20px;
-  margin-top: 40px;
+  margin-top: 20px;
   position: relative;
   z-index: 1;
 }
@@ -1478,7 +1469,7 @@ ul {
   display: grid;
   grid-template-columns: 1fr 1.5fr 1fr;
   gap: 40px;
-  margin-bottom: 30px;
+  margin-bottom: 10px;
   position: relative;
   z-index: 5;
 }
@@ -1547,7 +1538,7 @@ ul {
 }
 
 .footer-bottom-new {
-  padding-top: 20px;
+  padding-top: 15px;
   border-top: 1px solid rgba(0,0,0,0.05);
   display: flex;
   justify-content: space-between;
@@ -1598,7 +1589,7 @@ ul {
   font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.5px;
-  color: #222; /* Kararlı koyu renk */
+  color: #222; /* Stable dark color */
   text-transform: uppercase;
 }
 
@@ -1615,7 +1606,7 @@ ul {
   align-items: center;
   text-align: center;
   margin: 25px 0;
-  color: rgba(0, 0, 0, 0.4); /* Koyu yaptık, artık görünüyor */
+  color: rgba(0, 0, 0, 0.4); /* Made it dark, now visible */
   font-size: 0.7rem;
   letter-spacing: 2px;
 }
@@ -1624,7 +1615,7 @@ ul {
 .auth-divider::after {
   content: '';
   flex: 1;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Çizgiler artık net */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Lines are now clear */
 }
 
 .auth-divider::before { margin-right: 15px; }
@@ -2015,22 +2006,22 @@ ul {
   backdrop-filter: blur(20px);
   color: var(--secondary);
   padding: 14px 28px;
-  border-radius: 50px; /* Jilet gibi oval premium görünüm */
+  border-radius: 50px; /* Razor-sharp oval premium look */
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  border-bottom: 2px solid var(--accent-sage); /* Altın dokunuş */
+  border-bottom: 2px solid var(--accent-sage); /* Golden touch */
   font-weight: 600;
   font-size: 0.85rem;
   letter-spacing: 0.5px;
   display: flex;
   align-items: center;
   gap: 12px;
-  transform: translateY(-150%); /* Tepede saklanıyor */
+  transform: translateY(-150%); /* Hiding at the top */
   transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.4s ease;
   opacity: 0;
 }
 
 .toast.show {
-  transform: translateY(0); /* Pırlanta gibi düşüyor */
+  transform: translateY(0); /* Falling like a diamond */
   opacity: 1;
 }
 
@@ -2760,6 +2751,7 @@ ul {
   height: 3.2em; /* Ensure 2 lines */
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
