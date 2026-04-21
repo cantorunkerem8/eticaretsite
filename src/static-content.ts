@@ -34,14 +34,14 @@ export const STATIC_PAGES: Record<string, { title: string; content: string }> = 
               <h4>Official UK Office (Registered Address)</h4>
               <p>25 LANGTON CLOSE</p>
               <p>MAIDSTONE, KENT</p>
-              <p>ENGLAND, ME14 5PG</p>
+              <p>ENGLAND, ME14 5PG, UK</p>
             </div>
             
             <div class="contact-method">
               <h4>Warehouse & Logistics Centre</h4>
               <p>Aylesford Storage the Coach Works</p>
               <p>Old Mill Lane Suite 18</p>
-              <p>Aylesford, Kent, ME20 7DT</p>
+              <p>Aylesford, Kent, ME20 7DT, UK</p>
             </div>
           </div>
           
@@ -80,12 +80,12 @@ export const STATIC_PAGES: Record<string, { title: string; content: string }> = 
           <tbody>
             <tr>
               <td>UK Standard Shipping</td>
-              <td>7-14 Business Days</td>
+              <td>3-4 Business Days</td>
               <td>FREE</td>
             </tr>
             <tr>
               <td>UK Express Shipping</td>
-              <td>3-7 Business Days</td>
+              <td>1-2 Business Days</td>
               <td>£4.99</td>
             </tr>
             <tr>
@@ -103,7 +103,7 @@ export const STATIC_PAGES: Record<string, { title: string; content: string }> = 
         <p>SFUYA is not responsible for any customs and taxes applied to your order. All fees imposed during or after shipping are the responsibility of the customer (tariffs, taxes, etc.).</p>
         
         <h3>6. Warehouse Address</h3>
-        <p>Items may be dispatched from our primary facility: <strong>Aylesford Storage the Coach Works, Old Mill Lane Suite 18, Aylesford, Kent, ME20 7DT</strong>.</p>
+        <p>Items may be dispatched from our primary facility: <strong>Aylesford Storage the Coach Works, Old Mill Lane Suite 18, Aylesford, Kent, ME20 7DT, UK</strong>.</p>
       </div>
     `
   },
@@ -165,7 +165,7 @@ export const STATIC_PAGES: Record<string, { title: string; content: string }> = 
         
         <h3>8. Contact Us</h3>
         <p>For more information about our privacy practices, if you have questions, or if you would like to make a complaint, please contact us by e-mail at <strong>info@sfuya.com</strong> or by mail using the details provided below:</p>
-        <p><strong>SFUYA LTD, 25 Langton Close, Maidstone, Kent, England, ME14 5PG</strong></p>
+        <p><strong>SFUYA LTD, 25 Langton Close, Maidstone, Kent, England, ME14 5PG, UK</strong></p>
       </div>
     `
   },
@@ -199,7 +199,32 @@ export const STATIC_PAGES: Record<string, { title: string; content: string }> = 
         
         <h3>9. Contact Information</h3>
         <p>Questions about the Terms of Service should be sent to us at <strong>info@sfuya.com</strong>.</p>
-        <p>Registered Office: 25 Langton Close, Maidstone, Kent, England, ME14 5PG</p>
+        <p>Registered Office: 25 Langton Close, Maidstone, Kent, England, ME14 5PG, UK</p>
+      </div>
+    `
+  },
+  'cookie-policy': {
+    title: 'Cookie Policy',
+    content: `
+      <div class="legal-content">
+        <h3>1. What are Cookies?</h3>
+        <p>Cookies are small text files that are stored on your computer or mobile device when you visit a website. They are widely used to make websites work, or work more efficiently, as well as to provide information to the owners of the site.</p>
+        
+        <h3>2. How We Use Cookies</h3>
+        <p>At SFUYA, we use cookies to enhance your premium shopping experience. These small data files help us remember your preferences, favorites, and secure your login session. By using SFUYA, you consent to our use of essential and analytical cookies designed for high-performance browsing.</p>
+        
+        <h3>3. Types of Cookies We Use</h3>
+        <ul>
+          <li><strong>Essential Cookies:</strong> These are necessary for the website to function and cannot be switched off in our systems. They are usually only set in response to actions made by you which amount to a request for services, such as setting your privacy preferences, logging in or filling in forms.</li>
+          <li><strong>Performance & Analytics Cookies:</strong> These cookies allow us to count visits and traffic sources so we can measure and improve the performance of our site. They help us to know which pages are the most and least popular and see how visitors move around the site.</li>
+          <li><strong>Functional Cookies:</strong> These enable the website to provide enhanced functionality and personalization. They may be set by us or by third party providers whose services we have added to our pages.</li>
+        </ul>
+        
+        <h3>4. Managing Cookies</h3>
+        <p>Most web browsers allow some control of most cookies through the browser settings. To find out more about cookies, including how to see what cookies have been set, visit <a href="https://www.aboutcookies.org" target="_blank">www.aboutcookies.org</a> or <a href="https://www.allaboutcookies.org" target="_blank">www.allaboutcookies.org</a>.</p>
+        
+        <h3>5. Contact Us</h3>
+        <p>If you have any questions about our use of cookies, please contact us at <strong>info@sfuya.com</strong>.</p>
       </div>
     `
   }

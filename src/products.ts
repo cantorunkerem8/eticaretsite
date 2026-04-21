@@ -5,6 +5,7 @@ export interface Product {
   category: string;
   images: string[];
   description: string;
+  vendor: string; // Brand/manufacturer name
   shopifyVariantId?: string; // Needed for checkout
 }
 
@@ -18,6 +19,7 @@ export function mapShopifyProduct(node: any): Product {
     category: node.productType || (node.collections.edges[0]?.node.title) || 'General',
     images: node.images.edges.map((e: any) => e.node.url),
     description: node.description,
+    vendor: node.vendor || 'SFUYA',
     shopifyVariantId: node.variants.edges[0]?.node.id
   };
 }

@@ -3,7 +3,7 @@ import './auth.css'
 import { products, setProducts, mapShopifyProduct } from './products'
 import type { Product } from './products'
 import { STATIC_PAGES } from './static-content'
-import { fetchShopify, GET_PRODUCTS_QUERY, CREATE_CART_MUTATION, GET_COLLECTIONS_QUERY } from './shopify'
+import { fetchShopify, GET_PRODUCTS_QUERY, CREATE_CART_MUTATION, GET_COLLECTIONS_QUERY, GET_SITE_SETTINGS_QUERY, GET_PAGES_QUERY } from './shopify'
 
 // --- STATE MANAGEMENT ---
 interface AppState {
@@ -23,6 +23,8 @@ interface AppState {
   coupons: Coupon[];
   activeCoupon: Coupon | null;
   collections: any[];
+  siteSettings: any;
+  shopifyPages: any[];
 }
 
 interface Coupon {
@@ -57,7 +59,9 @@ const state: AppState = {
   cookieAccepted: localStorage.getItem('sfuya_cookies') === 'accepted',
   coupons: DUMMY_COUPONS,
   activeCoupon: JSON.parse(localStorage.getItem('sfuya_active_coupon') || 'null'),
-  collections: []
+  collections: [],
+  siteSettings: null,
+  shopifyPages: []
 };
 
 // --- ROUTER & VIEW SWITCHING ---
@@ -82,9 +86,19 @@ function navigateTo(path: string) {
   window.history.pushState({}, '', path);
   handleRoute();
 }
+// Make navigateTo globally accessible for inline onclick handlers in dynamic HTML
+(window as any).navigateTo = navigateTo;
 
 function handleRoute() {
-  const path = window.location.pathname;
+  let path = window.location.pathname.toLowerCase().trim();
+  // Normalize path to handle Shopify's /pages/ prefix
+  if (path.startsWith('/pages/')) {
+    path = path.replace('/pages/', '/');
+  }
+  if (path.endsWith('/') && path.length > 1) {
+    path = path.slice(0, -1);
+  }
+  
   const slug = path.startsWith('/') ? path.substring(1) : path;
   
   const homeView = document.getElementById('home-view');
@@ -102,11 +116,14 @@ function handleRoute() {
   document.querySelectorAll('#nav-links-list a').forEach(link => {
     link.classList.remove('active');
     const href = link.getAttribute('href');
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasCat = urlParams.has('category');
+
     if (href === path || 
         (href === '/' && path === '/') ||
         (href === '/brands' && path === '/brands') ||
-        (href === '/category' && (path === '/category' || path === '/collections')) ||
-        (href === '/all-products' && (path === '/all-products' || path === '/products')) ||
+        (href === '/category' && (path === '/category' || path === '/collections' || ((path === '/all-products' || path === '/products') && hasCat))) ||
+        (href === '/all-products' && (path === '/all-products' || path === '/products' || path === '/collections/all') && !hasCat) ||
         (href === '/about-us' && (path === '/about-us' || path === '/about')) ||
         (href === '/contact-us' && (path === '/contact-us' || path === '/contact'))) {
       link.classList.add('active');
@@ -128,10 +145,13 @@ function handleRoute() {
       renderErrorPage();
     }
   } 
-  else if (path === '/products' || path === '/all-products') {
-    document.title = 'SFUYA | All Products';
+  else if (path === '/products' || path === '/all-products' || path === '/collections/all') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const brandParam = urlParams.get('brand');
+    const categoryParam = urlParams.get('category');
+    document.title = brandParam ? `SFUYA | ${brandParam}` : categoryParam ? `SFUYA | ${categoryParam}` : 'SFUYA | All Products';
     dynamicView?.classList.remove('auth-hidden');
-    renderAllProductsPage();
+    renderAllProductsPage(brandParam || undefined, categoryParam || undefined);
     window.scrollTo(0, 0);
   }
   else if (path === '/collections' || path === '/category') {
@@ -181,11 +201,36 @@ function handleRoute() {
     homeView?.classList.remove('auth-hidden');
     renderProducts();
     renderSidebar();
+    window.scrollTo(0, 0);
   }
   else {
-    document.title = 'SFUYA | Page Not Found';
-    dynamicView?.classList.remove('auth-hidden');
-    renderErrorPage();
+    // Check if it's a dynamic Shopify page
+    const shopifyPage = state.shopifyPages.find(p => p.handle === slug);
+    if (shopifyPage) {
+      document.title = `SFUYA | ${shopifyPage.title}`;
+      staticView?.classList.remove('auth-hidden');
+      const container = document.getElementById('static-view');
+      if (container) {
+        container.innerHTML = `
+          <div class="legal-page-header">
+            <div class="container">
+              <h1>${shopifyPage.title}</h1>
+              <p class="breadcrumb">Home / ${shopifyPage.title}</p>
+            </div>
+          </div>
+          <div class="container">
+            <div class="static-page-container">
+              ${shopifyPage.body}
+            </div>
+          </div>
+        `;
+      }
+      window.scrollTo(0, 0);
+    } else {
+      document.title = 'SFUYA | 404 Not Found';
+      dynamicView?.classList.remove('auth-hidden');
+      renderErrorPage();
+    }
   }
 }
 
@@ -402,15 +447,27 @@ function renderCouponsPage() {
   });
 }
 
-function renderAllProductsPage() {
+function renderAllProductsPage(brandFilter?: string, categoryFilter?: string) {
   const container = document.getElementById('dynamic-view');
   if (!container) return;
+
+  let filteredProducts = products;
+  if (brandFilter) {
+    filteredProducts = filteredProducts.filter(p => p.name.toLowerCase().includes(brandFilter.toLowerCase()));
+  }
+  if (categoryFilter) {
+    filteredProducts = filteredProducts.filter(p => 
+      p.category === categoryFilter || 
+      p.vendor === categoryFilter || 
+      p.name.toLowerCase().includes(categoryFilter.toLowerCase())
+    );
+  }
 
   container.innerHTML = `
     <div class="legal-page-header">
       <div class="container">
-        <h1>ALL PRODUCTS</h1>
-        <p class="breadcrumb">Home / Shop / All Products</p>
+        <h1>${categoryFilter ? categoryFilter.toUpperCase() : 'ALL PRODUCTS'}</h1>
+        <p class="breadcrumb">Home / Shop / ${categoryFilter || 'All Products'}</p>
       </div>
     </div>
     <div class="container container-with-sidebar">
@@ -418,10 +475,10 @@ function renderAllProductsPage() {
         <div class="sidebar-block">
           <h4>CATEGORIES</h4>
           <ul class="sidebar-list">
-            <li><a href="#" onclick="navigateTo('/collections')">Cases</a></li>
-            <li><a href="#" onclick="navigateTo('/collections')">Chargers</a></li>
-            <li><a href="#" onclick="navigateTo('/collections')">Audio</a></li>
-            <li><a href="#" onclick="navigateTo('/collections')">Accessories</a></li>
+            <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products?category=Cases')">Cases</a></li>
+            <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products?category=Chargers')">Chargers</a></li>
+            <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products?category=Audio')">Audio</a></li>
+            <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products?category=Accessories')">Accessories</a></li>
           </ul>
         </div>
         <div class="sidebar-block">
@@ -446,7 +503,7 @@ function renderAllProductsPage() {
       </aside>
       <main class="shop-main">
         <div class="shop-toolbar">
-          <p>Showing ${products.length} results</p>
+          ${brandFilter || categoryFilter ? `<p>Showing results for <strong>${brandFilter || categoryFilter}</strong> &nbsp;<a href="/all-products" onclick="event.preventDefault(); navigateTo('/all-products')" style="font-size:0.8rem; color:#999;">✕ Clear</a></p>` : `<p>Showing ${filteredProducts.length} results</p>`}
           <select class="sort-select">
             <option>Default Sorting</option>
             <option>Price: Low to High</option>
@@ -455,7 +512,7 @@ function renderAllProductsPage() {
           </select>
         </div>
         <div class="product-grid" id="all-products-grid">
-          ${products.map(p => createProductCard(p)).join('')}
+          ${filteredProducts.length > 0 ? filteredProducts.map(p => createProductCard(p)).join('') : '<p>No products found.</p>'}
         </div>
       </main>
     </div>
@@ -493,21 +550,21 @@ function renderBrandsPage() {
   const container = document.getElementById('dynamic-view');
   if (!container) return;
 
-  const brandProducts = [
-    {
-      vendor: "SFUYA",
-      name: "Differin Acne Treatment Gel, 30 Day Supply, Retinoid Treatment for Face with 0.1% Adapalene, Gentle Skin Care for Acne Prone Sensitive Skin, 15g Tube",
-      price: "£13.99",
-      img: "https://cdn.shopify.com/s/files/1/0752/1606/0699/files/1_80166f41-5ea2-4e60-8731-8e4445236902.jpg?v=1749065513",
-      url: "/products"
-    },
-    {
-      vendor: "SFUYA",
-      name: "Superox Eyelid and Eyelash Cleanser - Fast Relief from Irritation, Styes and Blepharitis - Gentle Hypochlorous Acid Spray, 100 ml (3.38 oz)",
-      price: "£12.99",
-      img: "https://cdn.shopify.com/s/files/1/0752/1606/0699/files/superoxmain.jpg?v=1730654497",
-      url: "/products"
-    }
+  // Real brand names extracted from product titles in the catalog
+  const BRANDS = [
+    { name: 'Arziman', image: 'https://cdn.shopify.com/s/files/1/0752/1606/0699/files/1_51d8a0c2-398b-42a5-b130-5dbb0aa56023.jpg?v=1759917961' },
+    { name: 'Tide', image: 'https://cdn.shopify.com/s/files/1/0752/1606/0699/files/t1.png?v=1755079685' },
+    { name: 'DEWALT', image: 'https://cdn.shopify.com/s/files/1/0752/1606/0699/files/1_c516fbf7-ba25-4e95-bb29-3e28c88f0f1f.jpg?v=1749734932' },
+    { name: 'Bonide', image: 'https://cdn.shopify.com/s/files/1/0752/1606/0699/files/1_01f1f408-08b4-4c23-9968-61c3e86cc8e9.jpg?v=1749394864' },
+    { name: 'Goldlion', image: 'https://cdn.shopify.com/s/files/1/0752/1606/0699/files/1_84dfd06e-31e1-4503-be1e-403f6e86ab14.jpg?v=1749733745' },
+    { name: 'Skin-Tac', image: 'https://cdn.shopify.com/s/files/1/0752/1606/0699/files/1_0c6d179f-a228-4bee-9cd3-93c02ecc1be1.jpg?v=1749125321' },
+    { name: 'Differin', image: 'https://cdn.shopify.com/s/files/1/0752/1606/0699/files/1_80166f41-5ea2-4e60-8731-8e4445236902.jpg?v=1749065513' },
+    { name: 'PanOxyl', image: 'https://cdn.shopify.com/s/files/1/0752/1606/0699/files/1_5df13dd9-c2c8-4070-a77f-d0d91990f51d.jpg?v=1749733242' },
+    { name: 'Vitafusion', image: 'https://cdn.shopify.com/s/files/1/0752/1606/0699/files/2_ca6a0d39-cf5e-4ff6-b619-0313335e498e.jpg?v=1749126434' },
+    { name: 'Devrom', image: 'https://cdn.shopify.com/s/files/1/0752/1606/0699/files/devrom.jpg?v=1742901793' },
+    { name: 'LuxeAvant Innovations', image: 'https://cdn.shopify.com/s/files/1/0752/1606/0699/files/1_9cf6a5e9-5436-4e5e-a5e1-c1d9d86a4bc6.jpg?v=1742133957' },
+    { name: 'Superox', image: 'https://cdn.shopify.com/s/files/1/0752/1606/0699/files/superoxmain.jpg?v=1730654497' },
+    { name: 'Miracle Lab', image: 'https://cdn.shopify.com/s/files/1/0752/1606/0699/files/KEIKI2li.jpg?v=1730654337' },
   ];
 
   container.innerHTML = `
@@ -517,20 +574,14 @@ function renderBrandsPage() {
       </div>
     </div>
     <div class="container">
-      <div class="sfuya-brands-row">
-        <div class="sfuya-brand-banner">
-          <div class="sfuya-brand-banner-inner">
-            <h2 class="sfuya-featured-title">Featured<br>collection</h2>
-          </div>
-        </div>
-        ${brandProducts.map(p => `
-          <div class="sfuya-brand-card" onclick="navigateTo('${p.url}')">
-            <span class="sfuya-brand-vendor">${p.vendor}</span>
-            <div class="sfuya-brand-card-img">
-              <img src="${p.img}" alt="${p.name}" loading="lazy">
+      <h1 class="sfuya-page-title" style="margin-top: 40px; text-align: center;">Explore Our Premium Brands</h1>
+      <div class="brands-grid">
+        ${BRANDS.map(brand => `
+          <div class="brand-card-new" onclick="event.preventDefault(); navigateTo('/all-products?brand=${encodeURIComponent(brand.name)}')">
+            <div class="brand-logo-wrapper">
+              <img src="${brand.image}" alt="${brand.name}" loading="lazy">
             </div>
-            <h3 class="sfuya-brand-card-title">${p.name}</h3>
-            <p class="sfuya-brand-card-price">${p.price}</p>
+            <h3 class="brand-name-new">${brand.name}</h3>
           </div>
         `).join('')}
       </div>
@@ -700,7 +751,6 @@ function createProductCard(product: Product) {
       <div class="product-info">
         <h3 class="product-title" onclick="navigateTo('/product/${product.id}')">${product.name}</h3>
         <p class="product-price">£${product.price.toFixed(2)}</p>
-        <a href="/product/${product.id}" class="quick-view">VIEW DETAILS</a>
       </div>
     </div>
   `;
@@ -737,8 +787,8 @@ function attachProductCardListeners() {
         setTimeout(() => {
           img.src = product.images[currentIdx];
           img.style.opacity = '1';
-        }, 200);
-      }, 1500);
+        }, 150);
+      }, 800);
       hoverIntervals.set(id, interval);
     });
 
@@ -780,6 +830,28 @@ function renderPDP(product: Product) {
     };
   });
 
+  // Vanilla JS 'ElevateZoom' Inner-Zoom Effect
+  const imgWrapper = document.querySelector('.pdp-main-img-wrapper') as HTMLElement;
+  if (imgWrapper && mainImg) {
+    imgWrapper.addEventListener('mousemove', (e: MouseEvent) => {
+      const rect = imgWrapper.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const xPercent = (x / rect.width) * 100;
+      const yPercent = (y / rect.height) * 100;
+      
+      mainImg.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+      mainImg.style.transform = 'scale(2.5)';
+      mainImg.style.cursor = 'crosshair';
+    });
+    
+    imgWrapper.addEventListener('mouseleave', () => {
+      mainImg.style.transformOrigin = 'center center';
+      mainImg.style.transform = 'scale(1)';
+    });
+  }
+
   // PDP Actions
   const qtyInput = document.getElementById('pdp-qty') as HTMLInputElement;
   qtyInput.value = "1";
@@ -792,7 +864,42 @@ function renderPDP(product: Product) {
   if (backBtn) {
     backBtn.onclick = (e: MouseEvent) => {
       e.preventDefault();
-      navigateTo('/');
+      if (document.referrer.includes(window.location.host)) {
+        window.history.back();
+      } else {
+        navigateTo('/all-products');
+      }
+    };
+  }
+
+  // --- RELATED PRODUCTS CAROUSEL ---
+  const relatedTrack = document.getElementById('pdp-related-track');
+  const prevBtn = document.getElementById('related-prev');
+  const nextBtn = document.getElementById('related-next');
+
+  if (relatedTrack && prevBtn && nextBtn) {
+    // Determine related products (same category, exclude current, limit 8)
+    const related = products
+      .filter(p => p.category === product.category && p.id !== product.id)
+      .slice(0, 8);
+    
+    // If we don't have enough in category, just grab random products to fill
+    if (related.length < 4) {
+      const extra = products.filter(p => p.id !== product.id && !related.includes(p)).slice(0, 8 - related.length);
+      related.push(...extra);
+    }
+
+    relatedTrack.innerHTML = related.map(p => createProductCard(p)).join('');
+
+    // Carousel scrolling logic (scroll by card width + gap)
+    const scrollAmount = 270; // 250px width + 20px gap
+    
+    prevBtn.onclick = () => {
+      relatedTrack.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    };
+    
+    nextBtn.onclick = () => {
+      relatedTrack.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     };
   }
 
@@ -1279,11 +1386,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cookieBanner?.classList.add('auth-hidden');
   });
 
-  // Footer Accordion
-  document.getElementById('cookie-policy-trigger')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    document.getElementById('footer-legal-accordion')?.classList.toggle('accordion-expansion-active');
-  });
+  // Footer legal accordion removed in favor of separate page links
   
   setTimeout(() => {
     document.body.classList.add('ready');
@@ -1669,19 +1772,97 @@ document.addEventListener('DOMContentLoaded', () => {
       const shopifyProducts = prodData.products.edges.map((edge: any) => mapShopifyProduct(edge.node));
       setProducts(shopifyProducts);
 
-      // Fetch Collections
+      // 2. Fetch Collections
       const collData = await fetchShopify(GET_COLLECTIONS_QUERY);
       state.collections = collData.collections.edges.map((edge: any) => edge.node);
       
+      // 3. Fetch Global Site Settings (Metaobjects)
+      try {
+        const settingsData = await fetchShopify(GET_SITE_SETTINGS_QUERY);
+        if (settingsData.metaobjects.edges.length > 0) {
+          state.siteSettings = settingsData.metaobjects.edges[0].node;
+          applySiteSettings(state.siteSettings);
+        }
+      } catch (e) {
+        console.warn('Site settings not found or Metaobjects not defined. Using fallbacks.');
+      }
+
+      // 4. Fetch Dynamic Pages
+      try {
+        const pagesData = await fetchShopify(GET_PAGES_QUERY);
+        state.shopifyPages = pagesData.pages.edges.map((edge: any) => edge.node);
+      } catch (e) {
+        console.warn('Could not fetch Shopify pages. Using local content.');
+      }
+
+      // 5. Fetch Menu
+      // Intentional empty block: Removed dynamic menu fetching. We use the hardcoded nav links in index.html for correct routing.
+      console.log('Using hardcoded default navbar for precise routing.');
+
       // Re-run route to render with live data
       handleRoute();
       console.log('Shopify data loaded:', { 
         products: shopifyProducts.length, 
-        collections: state.collections.length
+        collections: state.collections.length,
+        pages: state.shopifyPages.length
       });
     } catch (err) {
       console.error('Failed to load Shopify data:', err);
       showToast("Store connection failed. Check your API token.", 'error');
+    }
+  }
+
+  // Dynamic navbar rendering removed to prevent overriding hardcoded paths.
+  // function renderNavbar(menuItems: any[]) { ... }
+
+  function applySiteSettings(settings: any) {
+    if (!settings) return;
+
+    // A. Footer Tagline
+    const taglineEl = document.getElementById('footer-tagline');
+    if (taglineEl && settings.slogan?.value) taglineEl.textContent = settings.slogan.value;
+
+    // B. Contact Info
+    const emailLink = document.getElementById('footer-email-link') as HTMLAnchorElement;
+    const emailText = document.getElementById('footer-email-text');
+    if (settings.email?.value) {
+      if (emailLink) emailLink.href = `mailto:${settings.email.value}`;
+      if (emailText) emailText.textContent = settings.email.value;
+    }
+
+    const addressText = document.getElementById('footer-address-text');
+    if (addressText && settings.address?.value) addressText.textContent = settings.address.value;
+
+    const warehouseText = document.getElementById('footer-warehouse-text');
+    if (warehouseText && settings.warehouse?.value) {
+      warehouseText.textContent = settings.warehouse.value;
+    }
+
+    const whatsappLink = document.getElementById('footer-whatsapp-link') as HTMLAnchorElement;
+    const whatsappText = document.getElementById('footer-whatsapp-text');
+    if (settings.whatsapp?.value) {
+      if (whatsappLink) whatsappLink.href = `https://api.whatsapp.com/send?phone=${settings.whatsapp.value}&text=`;
+      if (whatsappText) whatsappText.textContent = `WhatsApp Support (${settings.whatsapp.value})`;
+    }
+
+    // C. Marketing Texts (Hero)
+    if (settings.hero?.value) {
+      try {
+        // Metaobject list fields come as JSON string of array
+        const heroArray = JSON.parse(settings.hero.value);
+        if (Array.isArray(heroArray) && heroArray.length > 0) {
+          marketingTexts.length = 0; // Clear
+          marketingTexts.push(...heroArray);
+          updateHeroText(); // Immediate update
+        }
+      } catch (e) {
+        // Single value or malformed
+        if (settings.hero.value) {
+           marketingTexts.length = 0;
+           marketingTexts.push(settings.hero.value);
+           updateHeroText();
+        }
+      }
     }
   }
 
