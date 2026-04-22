@@ -38,7 +38,7 @@ export async function fetchShopify(query: string, variables = {}) {
 
 export const GET_PRODUCTS_QUERY = `
   {
-    products(first: 50) {
+    products(first: 250) {
       edges {
         node {
           id
@@ -47,7 +47,7 @@ export const GET_PRODUCTS_QUERY = `
           description
           productType
           vendor
-          collections(first: 5) {
+          collections(first: 10) {
             edges {
               node {
                 title

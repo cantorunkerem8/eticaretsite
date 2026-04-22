@@ -475,9 +475,9 @@ function renderAllProductsPage(brandFilter?: string, categoryFilter?: string, se
     );
   }
 
-  const uniqueCategories = Array.from(new Set(products.map(p => p.category))).filter(Boolean);
+  const uniqueCategories = Array.from(new Set(products.map(p => p.category))).filter(c => c && c.toLowerCase() !== 'general');
   const categoryCounts = products.reduce((acc, p) => {
-    if (p.category) acc[p.category] = (acc[p.category] || 0) + 1;
+    if (p.category && p.category.toLowerCase() !== 'general') acc[p.category] = (acc[p.category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
@@ -501,15 +501,18 @@ function renderAllProductsPage(brandFilter?: string, categoryFilter?: string, se
           <h4>SEARCH</h4>
           <input type="text" id="search-input" placeholder="Search products..." class="form-control" value="${searchFilter || ''}">
         </div>
+
+        ${!categoryFilter ? `
         <div class="sidebar-block">
-          <h4>CATEGORIES</h4>
+          <h4>TOP BRANDS</h4>
           <ul class="sidebar-list">
-            <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products')" style="${!categoryFilter && !brandFilter && !searchFilter ? 'font-weight: 700; color: var(--primary-dark);' : ''}">All Products</a></li>
-            ${uniqueCategories.map(cat => `
-              <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products?category=${encodeURIComponent(cat)}')" style="${categoryFilter === cat ? 'font-weight: 700; color: var(--primary-dark);' : ''}">${cat} <span style="color:#888; font-size:0.85em;">(${categoryCounts[cat]})</span></a></li>
-            `).join('')}
+             ${uniqueBrands.map(brand => `
+               <li><label style="${brandFilter === brand ? 'font-weight: 700; color: var(--primary-dark);' : ''}"><input type="checkbox" onclick="navigateTo('/all-products?brand=${encodeURIComponent(brand)}')" ${brandFilter === brand ? 'checked' : ''}> ${brand}</label></li>
+             `).join('')}
           </ul>
         </div>
+        ` : ''}
+
         <div class="sidebar-block">
           <h4>FILTER BY PRICE</h4>
           <div class="price-range-mock">
@@ -520,14 +523,18 @@ function renderAllProductsPage(brandFilter?: string, categoryFilter?: string, se
           <p class="price-range-text">Price: £0 — £150</p>
           <button class="btn btn-outline-naif btn-small">FILTER</button>
         </div>
+
+        ${!brandFilter ? `
         <div class="sidebar-block">
-          <h4>TOP BRANDS</h4>
+          <h4>CATEGORIES</h4>
           <ul class="sidebar-list">
-             ${uniqueBrands.map(brand => `
-               <li><label style="${brandFilter === brand ? 'font-weight: 700; color: var(--primary-dark);' : ''}"><input type="checkbox" onclick="navigateTo('/all-products?brand=${encodeURIComponent(brand)}')" ${brandFilter === brand ? 'checked' : ''}> ${brand}</label></li>
-             `).join('')}
+            <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products')" style="${!categoryFilter && !brandFilter && !searchFilter ? 'font-weight: 700; color: var(--primary-dark);' : ''}">All Products</a></li>
+            ${uniqueCategories.map(cat => `
+              <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products?category=${encodeURIComponent(cat)}')" style="${categoryFilter === cat ? 'font-weight: 700; color: var(--primary-dark);' : ''}">${cat} <span style="color:#888; font-size:0.85em;">(${categoryCounts[cat]})</span></a></li>
+            `).join('')}
           </ul>
         </div>
+        ` : ''}
       </aside>
       <main class="shop-main">
         <div class="shop-toolbar">
@@ -1390,14 +1397,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Search Bar Logic
   const searchInput = document.getElementById('search-input') as HTMLInputElement;
-  if (searchInput) {
+  const searchResultsDropdown = document.getElementById('search-results-dropdown');
+
+  if (searchInput && searchResultsDropdown) {
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.trim().toLowerCase();
+      if (query.length < 1) {
+        searchResultsDropdown.innerHTML = '';
+        searchResultsDropdown.style.display = 'none';
+        return;
+      }
+
+      const filtered = products.filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        p.category.toLowerCase().includes(query) ||
+        p.vendor.toLowerCase().includes(query)
+      ).slice(0, 8); // Show top 8 results
+
+      if (filtered.length > 0) {
+        searchResultsDropdown.innerHTML = filtered.map(p => `
+          <div class="search-result-item" data-id="${p.id}">
+            <img src="${p.images[0]}" alt="${p.name}" class="search-result-img">
+            <div class="search-result-info">
+              <span class="search-result-name">${p.name}</span>
+              <span class="search-result-price">£${p.price.toFixed(2)}</span>
+            </div>
+          </div>
+        `).join('');
+        searchResultsDropdown.style.display = 'block';
+
+        // Add click listeners to items
+        searchResultsDropdown.querySelectorAll('.search-result-item').forEach(item => {
+          item.addEventListener('click', (e) => {
+            const id = (item as HTMLElement).dataset.id;
+            if (id) {
+              navigateTo(`/product/${id}`);
+              searchInput.value = '';
+              searchResultsDropdown.style.display = 'none';
+            }
+          });
+        });
+      } else {
+        searchResultsDropdown.innerHTML = '<div class="no-results-msg">No products found.</div>';
+        searchResultsDropdown.style.display = 'block';
+      }
+    });
+
     searchInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         const query = searchInput.value.trim();
         if (query) {
           navigateTo(`/all-products?q=${encodeURIComponent(query)}`);
+          searchResultsDropdown.style.display = 'none';
         }
+      }
+    });
+
+    // Close dropdown on click outside
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target as Node) && !searchResultsDropdown.contains(e.target as Node)) {
+        searchResultsDropdown.style.display = 'none';
       }
     });
   }
