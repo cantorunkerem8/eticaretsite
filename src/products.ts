@@ -23,7 +23,7 @@ export function mapShopifyProduct(node: any): Product {
   let category = '';
 
   // 1. Special redirection for brands/technical terms to categories
-  const hasSuperox = collections.some(c => c.toLowerCase().includes('superox')) || (node.productType && node.productType.toLowerCase().includes('superox'));
+  const hasSuperox = collections.some((c: string) => c.toLowerCase().includes('superox')) || (node.productType && node.productType.toLowerCase().includes('superox'));
   
   if (hasSuperox) {
     category = 'Pet';
