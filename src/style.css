@@ -596,6 +596,18 @@ ul {
   gap: 20px !important;
 }
 
+#top-selling-grid {
+  display: grid !important;
+  grid-template-columns: repeat(6, 1fr) !important;
+  gap: 25px !important;
+  width: 100% !important;
+}
+
+#top-selling-grid .product-card {
+  width: 100% !important;
+  min-height: 420px; /* Make them slightly taller/larger */
+}
+
 /* All Products page layout - FULL WIDTH, slim sidebar + 6 big col grid */
 .container-with-sidebar {
   display: grid;
@@ -605,6 +617,28 @@ ul {
   padding: 40px 2%;
   max-width: 100% !important;
   width: 100%;
+}
+
+.container-top-selling {
+  max-width: 1800px !important;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .container-top-selling {
+    grid-template-columns: 1fr !important;
+    padding: 0 15px !important;
+  }
+
+  #top-selling-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 15px !important;
+  }
+}
+
+.container-wide {
+  max-width: 1500px !important;
+  margin: 0 auto;
 }
 
 .shop-sidebar {

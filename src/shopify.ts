@@ -38,7 +38,7 @@ export async function fetchShopify(query: string, variables = {}) {
 
 export const GET_PRODUCTS_QUERY = `
   {
-    products(first: 250) {
+    products(first: 250, sortKey: BEST_SELLING) {
       edges {
         node {
           id

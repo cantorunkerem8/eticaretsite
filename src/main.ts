@@ -163,6 +163,15 @@ function handleRoute() {
     renderCollectionsPage();
     window.scrollTo(0, 0);
   }
+  else if (path === '/top-selling') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const brandParam = urlParams.get('brand');
+    const categoryParam = urlParams.get('category');
+    document.title = 'SFUYA | Top Selling';
+    dynamicView?.classList.remove('auth-hidden');
+    renderTopSellingPage(categoryParam || undefined, brandParam || undefined);
+    window.scrollTo(0, 0);
+  }
   else if (path === '/brands') {
     document.title = 'SFUYA | Brands';
     dynamicView?.classList.remove('auth-hidden');
@@ -633,6 +642,69 @@ function renderBrandsPage() {
       </div>
     </div>
   `;
+}
+
+function renderTopSellingPage(categoryFilter?: string, brandFilter?: string) {
+  const container = document.getElementById('dynamic-view');
+  if (!container) return;
+
+  // Since products are already sorted by BEST_SELLING in fetch, we start with the top ones
+  let filteredTop = products;
+  
+  if (categoryFilter) {
+    filteredTop = filteredTop.filter(p => p.category === categoryFilter);
+  }
+  if (brandFilter) {
+    filteredTop = filteredTop.filter(p => p.vendor === brandFilter);
+  }
+
+  const topProducts = filteredTop.slice(0, 24);
+
+  const uniqueCategories = Array.from(new Set(products.map(p => p.category))).filter(c => c && c.toLowerCase() !== 'general');
+  // Filter out 'SFUYA' from brands list
+  const uniqueBrands = Array.from(new Set(products.map(p => p.vendor)))
+    .filter(b => b && b.toLowerCase() !== 'sfuya');
+
+  container.innerHTML = `
+    <div class="legal-page-header">
+      <div class="container">
+        <h1>TOP SELLING PRODUCTS</h1>
+        <p class="breadcrumb">Home / Shop / Top Selling</p>
+      </div>
+    </div>
+    <div class="container container-with-sidebar container-top-selling">
+      <aside class="shop-sidebar">
+        <div class="sidebar-block">
+          <h4>TOP BRANDS</h4>
+          <ul class="sidebar-list">
+             ${uniqueBrands.slice(0, 15).map(brand => `
+               <li><label style="${brandFilter === brand ? 'font-weight: 700; color: var(--primary-dark);' : ''}"><input type="checkbox" onclick="navigateTo('/top-selling?brand=${encodeURIComponent(brand)}')" ${brandFilter === brand ? 'checked' : ''}> ${brand}</label></li>
+             `).join('')}
+          </ul>
+        </div>
+
+        <div class="sidebar-block">
+          <h4>CATEGORIES</h4>
+          <ul class="sidebar-list">
+            <li><a href="#" onclick="event.preventDefault(); navigateTo('/top-selling')" style="${!categoryFilter && !brandFilter ? 'font-weight: 700; color: var(--primary-dark);' : ''}">All Top Sellers</a></li>
+            ${uniqueCategories.map(cat => `
+              <li><a href="#" onclick="event.preventDefault(); navigateTo('/top-selling?category=${encodeURIComponent(cat)}')" style="${categoryFilter === cat ? 'font-weight: 700; color: var(--primary-dark);' : ''}">${cat}</a></li>
+            `).join('')}
+          </ul>
+        </div>
+      </aside>
+
+      <main class="shop-main">
+        <div class="shop-toolbar">
+           <p>Showing ${topProducts.length} top-selling results ${categoryFilter || brandFilter ? `for <strong>${categoryFilter || brandFilter}</strong>` : ''}</p>
+        </div>
+        <div class="product-grid" id="top-selling-grid">
+          ${topProducts.length > 0 ? topProducts.map(p => createProductCard(p)).join('') : '<p>No products found in this selection.</p>'}
+        </div>
+      </main>
+    </div>
+  `;
+  attachProductCardListeners();
 }
 
 function renderAboutPage() {
