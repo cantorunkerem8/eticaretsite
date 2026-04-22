@@ -559,6 +559,11 @@ function renderCollectionsPage() {
   const container = document.getElementById('dynamic-view');
   if (!container) return;
 
+  const targetCategories = ['Garden', 'Health', 'Beauty', 'Home and Kitchen', 'Clothing', 'Tools & Home Improvement', 'Pet', 'Jewelry'];
+  const activeCategories = Array.from(new Set(products.map(p => p.category)))
+    .filter(cat => targetCategories.includes(cat))
+    .sort((a, b) => targetCategories.indexOf(a) - targetCategories.indexOf(b));
+
   container.innerHTML = `
     <div class="sfuya-breadcrumb-bar">
       <div class="container">
@@ -568,14 +573,20 @@ function renderCollectionsPage() {
     <div class="container">
       <h1 class="sfuya-page-title">Collections</h1>
       <div class="sfuya-collections-grid">
-        ${state.collections.length === 0 ? '<p>Loading collections...</p>' : state.collections.map((c) => `
-          <a href="/products?category=${c.title}" class="sfuya-collection-card" onclick="event.preventDefault(); navigateTo('/products?category=${c.title}')">
-            <div class="sfuya-collection-img">
-              <img src="${c.image?.url || products[0]?.images[0] || ''}" alt="${c.title}" loading="lazy">
-            </div>
-            <p class="sfuya-collection-name">${c.title}</p>
-          </a>
-        `).join('')}
+        ${activeCategories.length === 0 ? '<p>Loading categories...</p>' : activeCategories.map((cat) => {
+          // Find representative image
+          const firstProd = products.find(p => p.category === cat);
+          const img = firstProd?.images[0] || '';
+          
+          return `
+            <a href="/all-products?category=${encodeURIComponent(cat)}" class="sfuya-collection-card" onclick="event.preventDefault(); navigateTo('/all-products?category=${encodeURIComponent(cat)}')">
+              <div class="sfuya-collection-img">
+                <img src="${img}" alt="${cat}" loading="lazy">
+              </div>
+              <p class="sfuya-collection-name">${cat}</p>
+            </a>
+          `;
+        }).join('')}
       </div>
     </div>
   `;

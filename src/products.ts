@@ -18,25 +18,32 @@ export function mapShopifyProduct(node: any): Product {
   const ignoreList = ['home page', 'frontpage', 'all products', 'featured', 'new arrivals'];
   
   // Target categories we want to prioritize
-  const targetCategories = ['Garden', 'Health', 'Beauty', 'Home and Kitchen', 'Clothing', 'Tools & Home Improvement'];
+  const targetCategories = ['Garden', 'Health', 'Beauty', 'Home and Kitchen', 'Clothing', 'Tools & Home Improvement', 'Pet', 'Jewelry'];
   
   let category = '';
 
-  // 1. Check if product belongs to any of our target category collections
-  const matchedTarget = targetCategories.find(target => 
-    collections.some((c: string) => c.toLowerCase() === target.toLowerCase())
-  );
-
-  if (matchedTarget) {
-    category = matchedTarget;
+  // 1. Special redirection for brands/technical terms to categories
+  const hasSuperox = collections.some(c => c.toLowerCase().includes('superox')) || (node.productType && node.productType.toLowerCase().includes('superox'));
+  
+  if (hasSuperox) {
+    category = 'Pet';
   } else {
-    // 2. Fallback to productType
-    category = node.productType;
+    // 2. Check if product belongs to any of our target category collections
+    const matchedTarget = targetCategories.find(target => 
+      collections.some((c: string) => c.toLowerCase() === target.toLowerCase())
+    );
 
-    // 3. Fallback to first non-ignored collection
-    if (!category || category.toLowerCase() === 'general') {
-      const validCollection = collections.find((t: string) => !ignoreList.includes(t.toLowerCase()));
-      if (validCollection) category = validCollection;
+    if (matchedTarget) {
+      category = matchedTarget;
+    } else {
+      // 3. Fallback to productType
+      category = node.productType;
+
+      // 4. Fallback to first non-ignored collection
+      if (!category || category.toLowerCase() === 'general') {
+        const validCollection = collections.find((t: string) => !ignoreList.includes(t.toLowerCase()));
+        if (validCollection) category = validCollection;
+      }
     }
   }
 
