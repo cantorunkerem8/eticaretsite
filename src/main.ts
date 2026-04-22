@@ -9,6 +9,7 @@ import { fetchShopify, GET_PRODUCTS_QUERY, CREATE_CART_MUTATION, GET_COLLECTIONS
 interface AppState {
   currentCategory: string | null;
   minPrice: number;
+  homeSort: string;
   maxPrice: number;
   isLoggedIn: boolean;
   cartCount: number;
@@ -47,6 +48,7 @@ const state: AppState = {
   currentCategory: null,
   minPrice: 0,
   maxPrice: Infinity,
+  homeSort: 'default',
   isLoggedIn: !!savedUser,
   cartCount: savedCart.length,
   cartItems: savedCart,
@@ -67,12 +69,12 @@ const state: AppState = {
 // --- ROUTER & VIEW SWITCHING ---
 function initRouter() {
   window.addEventListener('popstate', handleRoute);
-  
+
   // Intercept all internal links
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
     const link = target.closest('a');
-    
+
     if (link && link.getAttribute('href')?.startsWith('/') && !link.getAttribute('href')?.includes('myshopify.com')) {
       e.preventDefault();
       navigateTo(link.getAttribute('href')!);
@@ -98,9 +100,9 @@ function handleRoute() {
   if (path.endsWith('/') && path.length > 1) {
     path = path.slice(0, -1);
   }
-  
+
   const slug = path.startsWith('/') ? path.substring(1) : path;
-  
+
   const homeView = document.getElementById('home-view');
   const productView = document.getElementById('product-view');
   const staticView = document.getElementById('static-view');
@@ -119,13 +121,13 @@ function handleRoute() {
     const urlParams = new URLSearchParams(window.location.search);
     const hasCat = urlParams.has('category');
 
-    if (href === path || 
-        (href === '/' && path === '/') ||
-        (href === '/brands' && path === '/brands') ||
-        (href === '/category' && (path === '/category' || path === '/collections' || ((path === '/all-products' || path === '/products') && hasCat))) ||
-        (href === '/all-products' && (path === '/all-products' || path === '/products' || path === '/collections/all') && !hasCat) ||
-        (href === '/about-us' && (path === '/about-us' || path === '/about')) ||
-        (href === '/contact-us' && (path === '/contact-us' || path === '/contact'))) {
+    if (href === path ||
+      (href === '/' && path === '/') ||
+      (href === '/brands' && path === '/brands') ||
+      (href === '/category' && (path === '/category' || path === '/collections' || ((path === '/all-products' || path === '/products') && hasCat))) ||
+      (href === '/all-products' && (path === '/all-products' || path === '/products' || path === '/collections/all') && !hasCat) ||
+      (href === '/about-us' && (path === '/about-us' || path === '/about')) ||
+      (href === '/contact-us' && (path === '/contact-us' || path === '/contact'))) {
       link.classList.add('active');
     }
   });
@@ -133,7 +135,7 @@ function handleRoute() {
   if (path.startsWith('/product/')) {
     const productId = path.replace('/product/', '');
     const product = products.find(p => p.id === productId);
-    
+
     if (product) {
       document.title = `SFUYA | ${product.name}`;
       productView?.classList.remove('auth-hidden');
@@ -144,14 +146,15 @@ function handleRoute() {
       dynamicView?.classList.remove('auth-hidden');
       renderErrorPage();
     }
-  } 
+  }
   else if (path === '/products' || path === '/all-products' || path === '/collections/all') {
     const urlParams = new URLSearchParams(window.location.search);
     const brandParam = urlParams.get('brand');
     const categoryParam = urlParams.get('category');
-    document.title = brandParam ? `SFUYA | ${brandParam}` : categoryParam ? `SFUYA | ${categoryParam}` : 'SFUYA | All Products';
+    const searchParam = urlParams.get('q');
+    document.title = searchParam ? `SFUYA | Search: ${searchParam}` : brandParam ? `SFUYA | ${brandParam}` : categoryParam ? `SFUYA | ${categoryParam}` : 'SFUYA | All Products';
     dynamicView?.classList.remove('auth-hidden');
-    renderAllProductsPage(brandParam || undefined, categoryParam || undefined);
+    renderAllProductsPage(brandParam || undefined, categoryParam || undefined, searchParam || undefined);
     window.scrollTo(0, 0);
   }
   else if (path === '/collections' || path === '/category') {
@@ -255,7 +258,7 @@ function renderFavoritesPage() {
   if (!container) return;
 
   // Local state for the page
-  let dateFilter = 'all'; 
+  let dateFilter = 'all';
   let selectedIds: string[] = [];
 
   const updateView = () => {
@@ -379,7 +382,7 @@ function renderCouponsPage() {
   if (!container) return;
 
   const now = Date.now();
-  
+
   container.innerHTML = `
     <div class="coupons-page">
       <div class="coupons-header">
@@ -395,15 +398,15 @@ function renderCouponsPage() {
             <p style="color: #777;">Stay tuned! We'll be bringing you new discounts and offers soon.</p>
           </div>
         ` : state.coupons.map(coupon => {
-          const isExpired = now > coupon.endDate;
-          const isFuture = now < coupon.startDate;
-          let statusLabel = '<span class="status-active">Active</span>';
-          if (isExpired) statusLabel = '<span class="status-expired">Expired</span>';
-          else if (isFuture) statusLabel = '<span class="status-future">Coming Soon</span>';
+    const isExpired = now > coupon.endDate;
+    const isFuture = now < coupon.startDate;
+    let statusLabel = '<span class="status-active">Active</span>';
+    if (isExpired) statusLabel = '<span class="status-expired">Expired</span>';
+    else if (isFuture) statusLabel = '<span class="status-future">Coming Soon</span>';
 
-          const endDateStr = new Date(coupon.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const endDateStr = new Date(coupon.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-          return `
+    return `
             <div class="coupon-ticket ${isExpired ? 'expired' : ''}">
               <div class="ticket-left">
                 <div class="discount-value">
@@ -426,7 +429,7 @@ function renderCouponsPage() {
               </div>
             </div>
           `;
-        }).join('')}
+  }).join('')}
       </div>
     </div>
   `;
@@ -447,7 +450,7 @@ function renderCouponsPage() {
   });
 }
 
-function renderAllProductsPage(brandFilter?: string, categoryFilter?: string) {
+function renderAllProductsPage(brandFilter?: string, categoryFilter?: string, searchFilter?: string) {
   const container = document.getElementById('dynamic-view');
   if (!container) return;
 
@@ -456,29 +459,55 @@ function renderAllProductsPage(brandFilter?: string, categoryFilter?: string) {
     filteredProducts = filteredProducts.filter(p => p.name.toLowerCase().includes(brandFilter.toLowerCase()));
   }
   if (categoryFilter) {
-    filteredProducts = filteredProducts.filter(p => 
-      p.category === categoryFilter || 
-      p.vendor === categoryFilter || 
+    filteredProducts = filteredProducts.filter(p =>
+      p.category === categoryFilter ||
+      p.vendor === categoryFilter ||
       p.name.toLowerCase().includes(categoryFilter.toLowerCase())
     );
   }
+  if (searchFilter) {
+    const query = searchFilter.toLowerCase();
+    filteredProducts = filteredProducts.filter(p => 
+      p.name.toLowerCase().includes(query) || 
+      p.category.toLowerCase().includes(query) || 
+      p.vendor.toLowerCase().includes(query) ||
+      (p.description && p.description.toLowerCase().includes(query))
+    );
+  }
+
+  const uniqueCategories = Array.from(new Set(products.map(p => p.category))).filter(Boolean);
+  const categoryCounts = products.reduce((acc, p) => {
+    if (p.category) acc[p.category] = (acc[p.category] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const uniqueBrands = Array.from(new Set(products.map(p => p.vendor))).filter(Boolean);
+
+  let titleText = 'ALL PRODUCTS';
+  if (searchFilter) titleText = `Search Results for "${searchFilter}"`;
+  else if (categoryFilter) titleText = categoryFilter.toUpperCase();
+  else if (brandFilter) titleText = brandFilter.toUpperCase();
 
   container.innerHTML = `
     <div class="legal-page-header">
       <div class="container">
-        <h1>${categoryFilter ? categoryFilter.toUpperCase() : 'ALL PRODUCTS'}</h1>
-        <p class="breadcrumb">Home / Shop / ${categoryFilter || 'All Products'}</p>
+        <h1>${titleText}</h1>
+        <p class="breadcrumb">Home / Shop / ${searchFilter ? 'Search' : (categoryFilter || brandFilter || 'All Products')}</p>
       </div>
     </div>
     <div class="container container-with-sidebar">
       <aside class="shop-sidebar">
         <div class="sidebar-block">
+          <h4>SEARCH</h4>
+          <input type="text" id="search-input" placeholder="Search products..." class="form-control" value="${searchFilter || ''}">
+        </div>
+        <div class="sidebar-block">
           <h4>CATEGORIES</h4>
           <ul class="sidebar-list">
-            <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products?category=Cases')">Cases</a></li>
-            <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products?category=Chargers')">Chargers</a></li>
-            <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products?category=Audio')">Audio</a></li>
-            <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products?category=Accessories')">Accessories</a></li>
+            <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products')" style="${!categoryFilter && !brandFilter && !searchFilter ? 'font-weight: 700; color: var(--primary-dark);' : ''}">All Products</a></li>
+            ${uniqueCategories.map(cat => `
+              <li><a href="#" onclick="event.preventDefault(); navigateTo('/all-products?category=${encodeURIComponent(cat)}')" style="${categoryFilter === cat ? 'font-weight: 700; color: var(--primary-dark);' : ''}">${cat} <span style="color:#888; font-size:0.85em;">(${categoryCounts[cat]})</span></a></li>
+            `).join('')}
           </ul>
         </div>
         <div class="sidebar-block">
@@ -494,10 +523,9 @@ function renderAllProductsPage(brandFilter?: string, categoryFilter?: string) {
         <div class="sidebar-block">
           <h4>TOP BRANDS</h4>
           <ul class="sidebar-list">
-             <li><label><input type="checkbox"> BASEUS</label></li>
-             <li><label><input type="checkbox"> HOCO</label></li>
-             <li><label><input type="checkbox"> WIWU</label></li>
-             <li><label><input type="checkbox"> MCDODO</label></li>
+             ${uniqueBrands.map(brand => `
+               <li><label style="${brandFilter === brand ? 'font-weight: 700; color: var(--primary-dark);' : ''}"><input type="checkbox" onclick="navigateTo('/all-products?brand=${encodeURIComponent(brand)}')" ${brandFilter === brand ? 'checked' : ''}> ${brand}</label></li>
+             `).join('')}
           </ul>
         </div>
       </aside>
@@ -733,7 +761,7 @@ let hoverIntervals: Map<string, any> = new Map();
 function createProductCard(product: Product) {
   const coverImage = product.images[0] || '';
   const isFav = state.favorites.some(f => f.id === product.id);
-  
+
   return `
     <div class="product-card" data-id="${product.id}">
       <div class="product-image">
@@ -799,9 +827,9 @@ function attachProductCardListeners() {
     });
 
     card.querySelector('.product-image')?.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
-        if (target.closest('.add-to-cart-btn') || target.closest('.btn-favorite-trigger')) return;
-        navigateTo(`/product/${id}`);
+      const target = e.target as HTMLElement;
+      if (target.closest('.add-to-cart-btn') || target.closest('.btn-favorite-trigger')) return;
+      navigateTo(`/product/${id}`);
     });
   });
 }
@@ -813,12 +841,12 @@ function renderPDP(product: Product) {
   document.getElementById('pdp-title')!.textContent = product.name;
   document.getElementById('pdp-price')!.textContent = `£${product.price.toFixed(2)}`;
   document.getElementById('pdp-desc')!.innerHTML = product.description || "No detailed description available.";
-  
+
   const mainImg = document.getElementById('pdp-main-img') as HTMLImageElement;
   mainImg.src = product.images[0];
 
   const thumbs = document.getElementById('pdp-thumbs')!;
-  thumbs.innerHTML = product.images.map((img, i) => 
+  thumbs.innerHTML = product.images.map((img, i) =>
     `<img src="${img}" class="${i === 0 ? 'active' : ''}" data-idx="${i}">`
   ).join('');
 
@@ -837,15 +865,15 @@ function renderPDP(product: Product) {
       const rect = imgWrapper.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      
+
       const xPercent = (x / rect.width) * 100;
       const yPercent = (y / rect.height) * 100;
-      
+
       mainImg.style.transformOrigin = `${xPercent}% ${yPercent}%`;
       mainImg.style.transform = 'scale(2.5)';
       mainImg.style.cursor = 'crosshair';
     });
-    
+
     imgWrapper.addEventListener('mouseleave', () => {
       mainImg.style.transformOrigin = 'center center';
       mainImg.style.transform = 'scale(1)';
@@ -882,7 +910,7 @@ function renderPDP(product: Product) {
     const related = products
       .filter(p => p.category === product.category && p.id !== product.id)
       .slice(0, 8);
-    
+
     // If we don't have enough in category, just grab random products to fill
     if (related.length < 4) {
       const extra = products.filter(p => p.id !== product.id && !related.includes(p)).slice(0, 8 - related.length);
@@ -893,11 +921,11 @@ function renderPDP(product: Product) {
 
     // Carousel scrolling logic (scroll by card width + gap)
     const scrollAmount = 270; // 250px width + 20px gap
-    
+
     prevBtn.onclick = () => {
       relatedTrack.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
     };
-    
+
     nextBtn.onclick = () => {
       relatedTrack.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     };
@@ -919,7 +947,7 @@ function renderSidebar() {
   if (!catList) return;
 
   const categories = Array.from(new Set(products.map(p => p.category)));
-  catList.innerHTML = `<li class="category-item ${!state.currentCategory ? 'active' : ''}" data-cat="all"><span>All Products</span></li>` + 
+  catList.innerHTML = `<li class="category-item ${!state.currentCategory ? 'active' : ''}" data-cat="all"><span>All Products</span></li>` +
     categories.map(cat => {
       const count = products.filter(p => p.category === cat).length;
       return `<li class="category-item ${state.currentCategory === cat ? 'active' : ''}" data-cat="${cat}">
@@ -962,6 +990,14 @@ function applyFilters() {
     const matchesPrice = p.price >= state.minPrice && p.price <= state.maxPrice;
     return matchesCat && matchesPrice;
   });
+
+  if (state.homeSort === 'price-low') {
+    filtered.sort((a, b) => a.price - b.price);
+  } else if (state.homeSort === 'price-high') {
+    filtered.sort((a, b) => b.price - a.price);
+  }
+  // 'default' and 'best-selling' maintain the default order (which is now BEST_SELLING from Shopify)
+
   renderProducts(filtered);
 }
 
@@ -1016,7 +1052,7 @@ function renderCartDrawer() {
       `}
     </div>
   `;
-  
+
   updateCartTotals();
 }
 
@@ -1054,38 +1090,38 @@ function addToCart(product: Product, qty: number = 1) {
   } else {
     state.cartItems.push({ ...product, quantity: qty });
   }
-  
+
   state.cartCount = state.cartItems.reduce((acc, item) => acc + item.quantity, 0);
   localStorage.setItem('sfuya_cart', JSON.stringify(state.cartItems));
-  
+
   updateCartBadge();
   updateCartTitleCount();
   renderCartDrawer();
-  
+
   showToast(`${product.name} added to cart!`);
 }
 
 function updateCartTotals() {
   const subtotal = state.cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   let discount = 0;
-  
+
   const discountEl = document.getElementById('summary-discount');
   const discountRow = document.getElementById('summary-discount-row');
-  
+
   if (state.activeCoupon) {
     const now = Date.now();
     // Re-verify on calculation
-    const isValid = now >= state.activeCoupon.startDate && 
-                    now <= state.activeCoupon.endDate && 
-                    subtotal >= state.activeCoupon.minSpend;
-    
+    const isValid = now >= state.activeCoupon.startDate &&
+      now <= state.activeCoupon.endDate &&
+      subtotal >= state.activeCoupon.minSpend;
+
     if (isValid) {
       if (state.activeCoupon.discountType === 'percentage') {
         discount = (subtotal * state.activeCoupon.discountValue) / 100;
       } else {
         discount = state.activeCoupon.discountValue;
       }
-      
+
       if (discountEl) discountEl.textContent = `-£${discount.toFixed(2)}`;
       discountRow?.classList.remove('auth-hidden');
     } else {
@@ -1100,11 +1136,11 @@ function updateCartTotals() {
   }
 
   const grandTotal = subtotal - discount;
-  
+
   document.getElementById('cart-total-price')!.textContent = `£${grandTotal.toFixed(2)}`;
   const summarySubtotal = document.getElementById('summary-subtotal');
   if (summarySubtotal) summarySubtotal.textContent = `£${subtotal.toFixed(2)}`;
-  
+
   const cartBadgeTotal = document.getElementById('cart-total-badge');
   if (cartBadgeTotal) cartBadgeTotal.textContent = `£${grandTotal.toFixed(2)}`;
 }
@@ -1116,7 +1152,7 @@ async function handleCheckout() {
   }
 
   showToast("Preparing your secure checkout...", 'success');
-  
+
   try {
     // New Cart API format (lines instead of lineItems)
     const lines = state.cartItems.map(item => ({
@@ -1148,7 +1184,7 @@ async function handleCheckout() {
           .replace('www.sfuya.com', 'cd3889.myshopify.com')
           .replace('sfuya.com', 'cd3889.myshopify.com');
       }
-      
+
       console.log('Cart created successfully! Breaking loop and redirecting to:', forcedCheckoutUrl);
       window.location.href = forcedCheckoutUrl;
     } else {
@@ -1165,37 +1201,37 @@ async function handleCheckout() {
 (window as any).applyCoupon = () => {
   const input = document.getElementById('coupon-input') as HTMLInputElement;
   const code = input.value.trim().toUpperCase();
-  
+
   if (!code) {
     showToast("Please enter a coupon code.", 'error');
     return;
   }
-  
+
   const subtotal = state.cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const coupon = state.coupons.find(c => c.code === code);
-  
+
   if (!coupon) {
     showToast("Invalid coupon code.", 'error');
     return;
   }
-  
+
   const now = Date.now();
-  
+
   if (now < coupon.startDate) {
     showToast("This coupon is not active yet.", 'error');
     return;
   }
-  
+
   if (now > coupon.endDate) {
     showToast("This coupon has expired.", 'error');
     return;
   }
-  
+
   if (subtotal < coupon.minSpend) {
     showToast(`Minimum spend of £${coupon.minSpend} required for this coupon.`, 'error');
     return;
   }
-  
+
   state.activeCoupon = coupon;
   localStorage.setItem('sfuya_active_coupon', JSON.stringify(coupon));
   showToast(`Coupon ${code} applied successfully!`);
@@ -1223,10 +1259,10 @@ function updateCartBadge() {
 }
 
 function updateCartTitleCount() {
-    const titleCount = document.getElementById('cart-item-count-title');
-    const summaryCount = document.getElementById('summary-item-count');
-    if (titleCount) titleCount.textContent = state.cartCount.toString();
-    if (summaryCount) summaryCount.textContent = state.cartCount.toString();
+  const titleCount = document.getElementById('cart-item-count-title');
+  const summaryCount = document.getElementById('summary-item-count');
+  if (titleCount) titleCount.textContent = state.cartCount.toString();
+  if (summaryCount) summaryCount.textContent = state.cartCount.toString();
 }
 
 // --- UTILS ---
@@ -1236,8 +1272,8 @@ function showToast(message: string, type: 'success' | 'error' = 'success') {
 
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  
-  const icon = type === 'success' 
+
+  const icon = type === 'success'
     ? `<svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`
     : `<svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 
@@ -1283,10 +1319,10 @@ function processGoogleUser(payload: any) {
     email: payload.email,
     picture: payload.picture
   };
-  
+
   // Persist to localStorage
   localStorage.setItem('sfuya_user', JSON.stringify(state.user));
-  
+
   if ((window as any).renderAuthStatus) {
     (window as any).renderAuthStatus();
   }
@@ -1302,7 +1338,7 @@ function processGoogleUser(payload: any) {
 
 // Full-page Google OAuth2 redirect (no popup)
 (window as any).googleSignInRedirect = () => {
-  const redirectUri = window.location.origin; 
+  const redirectUri = window.location.origin;
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=openid%20email%20profile`;
   window.location.href = authUrl;
 };
@@ -1339,8 +1375,8 @@ function handleOAuthRedirect() {
 function decodeJwtResponse(token: string) {
   let base64Url = token.split('.')[1];
   let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-  let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  let jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
   }).join(''));
   return JSON.parse(jsonPayload);
 }
@@ -1349,9 +1385,32 @@ function decodeJwtResponse(token: string) {
 document.addEventListener('DOMContentLoaded', () => {
   // Check for Google OAuth redirect first
   handleOAuthRedirect();
-  
+
   initRouter();
-  
+
+  // Search Bar Logic
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const query = searchInput.value.trim();
+        if (query) {
+          navigateTo(`/all-products?q=${encodeURIComponent(query)}`);
+        }
+      }
+    });
+  }
+
+  // Home Page Sort Logic
+  const homeSortSelect = document.getElementById('home-sort-select') as HTMLSelectElement;
+  if (homeSortSelect) {
+    homeSortSelect.addEventListener('change', (e) => {
+      state.homeSort = (e.target as HTMLSelectElement).value;
+      applyFilters();
+    });
+  }
+
   // Hydrate UI from localStorage
   if ((window as any).renderAuthStatus) (window as any).renderAuthStatus();
   updateCartBadge();
@@ -1387,11 +1446,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Footer legal accordion removed in favor of separate page links
-  
+
   setTimeout(() => {
     document.body.classList.add('ready');
   }, 50);
-  
+
   // Auth logic
   // --- USER PROFILE & DROPDOWN ---
   const renderAuthStatus = () => {
@@ -1435,7 +1494,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Toggle Dropdown
       const trigger = document.getElementById('profile-trigger');
       const menu = document.getElementById('user-dropdown-menu');
-      
+
       trigger?.addEventListener('click', (e) => {
         e.stopPropagation();
         menu?.classList.toggle('auth-hidden');
@@ -1459,10 +1518,10 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('logout-trigger')?.addEventListener('click', () => {
         state.isLoggedIn = false;
         state.user = { name: null, email: null, picture: null };
-        
+
         // Clear from localStorage
         localStorage.removeItem('sfuya_user');
-        
+
         renderAuthStatus();
         showToast('Logged out successfully');
       });
@@ -1488,19 +1547,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const renderGoogleButton = () => {
     const container = document.getElementById('google-login-btn-container');
     if (!container || state.isLoggedIn) return; // Only render if container exists and user is logged out
-    
+
     // Clear and Redraw
     container.innerHTML = '';
-    
+
     (window as any).google?.accounts.id.renderButton(
       container,
-      { 
-        theme: "outline", 
-        size: "large", 
-        width: "100%", 
+      {
+        theme: "outline",
+        size: "large",
+        width: "100%",
         shape: "pill",
         text: "signup_with",
-        locale: "en" 
+        locale: "en"
       }
     );
   };
@@ -1589,10 +1648,10 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast("Account created successfully! Welcome to SFUYA.");
       state.isLoggedIn = true;
       state.user = { name: nameParts[0] || 'User', email: email, picture: null };
-      
+
       // Persist to localStorage
       localStorage.setItem('sfuya_user', JSON.stringify(state.user));
-      
+
       renderAuthStatus();
       document.getElementById('auth-modal')?.classList.add('auth-hidden');
       showToast(`Welcome back, ${state.user.name}!`);
@@ -1689,7 +1748,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!dynamicText) return;
     dynamicText.classList.remove('wide-anim');
     dynamicText.classList.add('hidden');
-    
+
     setTimeout(() => {
       dynamicText.textContent = marketingTexts[textIndex];
       dynamicText.classList.remove('hidden');
@@ -1703,22 +1762,22 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateHeroText, 4000);
   }
 
-   // Cart Toggle
-   const cartOverlay = document.getElementById('cart-drawer-overlay');
-   document.getElementById('cart-trigger')?.addEventListener('click', (e) => {
-     e.preventDefault();
-     cartOverlay?.classList.remove('auth-hidden');
-     document.body.style.overflow = 'hidden';
-   });
-   document.getElementById('close-cart-drawer')?.addEventListener('click', () => {
-     cartOverlay?.classList.add('auth-hidden');
-     document.body.style.overflow = '';
-   });
+  // Cart Toggle
+  const cartOverlay = document.getElementById('cart-drawer-overlay');
+  document.getElementById('cart-trigger')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    cartOverlay?.classList.remove('auth-hidden');
+    document.body.style.overflow = 'hidden';
+  });
+  document.getElementById('close-cart-drawer')?.addEventListener('click', () => {
+    cartOverlay?.classList.add('auth-hidden');
+    document.body.style.overflow = '';
+  });
 
   // Global Click Handlers (Favorites & Cart)
   document.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    
+
     // Add to cart
     const addBtn = t.closest('.add-to-cart-btn');
     if (addBtn) {
@@ -1775,7 +1834,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // 2. Fetch Collections
       const collData = await fetchShopify(GET_COLLECTIONS_QUERY);
       state.collections = collData.collections.edges.map((edge: any) => edge.node);
-      
+
       // 3. Fetch Global Site Settings (Metaobjects)
       try {
         const settingsData = await fetchShopify(GET_SITE_SETTINGS_QUERY);
@@ -1801,8 +1860,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Re-run route to render with live data
       handleRoute();
-      console.log('Shopify data loaded:', { 
-        products: shopifyProducts.length, 
+      console.log('Shopify data loaded:', {
+        products: shopifyProducts.length,
         collections: state.collections.length,
         pages: state.shopifyPages.length
       });
@@ -1858,9 +1917,9 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (e) {
         // Single value or malformed
         if (settings.hero.value) {
-           marketingTexts.length = 0;
-           marketingTexts.push(settings.hero.value);
-           updateHeroText();
+          marketingTexts.length = 0;
+          marketingTexts.push(settings.hero.value);
+          updateHeroText();
         }
       }
     }

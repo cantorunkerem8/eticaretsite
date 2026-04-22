@@ -47,7 +47,7 @@ export const GET_PRODUCTS_QUERY = `
           description
           productType
           vendor
-          collections(first: 1) {
+          collections(first: 5) {
             edges {
               node {
                 title

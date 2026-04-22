@@ -256,9 +256,17 @@
 
           <!-- Main Product Content -->
           <div class="product-listing-content">
-            <div class="section-header">
-              <h2>Featured Collection</h2>
-              <div class="header-line"></div>
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px;">
+              <div>
+                <h2>Featured Collection</h2>
+                <div class="header-line"></div>
+              </div>
+              <select class="sort-select" id="home-sort-select" style="min-width: 200px;">
+                <option value="default">Default Sorting</option>
+                <option value="best-selling">Top Selling</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+              </select>
             </div>
             <div class="product-grid" id="product-list">
               <div class="product-card-skeleton"></div>

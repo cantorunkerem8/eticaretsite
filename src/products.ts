@@ -12,11 +12,14 @@ export interface Product {
 export let products: Product[] = [];
 
 export function mapShopifyProduct(node: any): Product {
+  const collections = node.collections.edges.map((e: any) => e.node.title);
+  const validCollection = collections.find((t: string) => t.toLowerCase() !== 'home page' && t.toLowerCase() !== 'frontpage');
+
   return {
     id: node.handle, // Use handle for clean URLs
     name: node.title,
     price: parseFloat(node.variants.edges[0]?.node.price.amount || '0'),
-    category: node.productType || (node.collections.edges[0]?.node.title) || 'General',
+    category: node.productType || validCollection || 'General',
     images: node.images.edges.map((e: any) => e.node.url),
     description: node.description,
     vendor: node.vendor || 'SFUYA',
