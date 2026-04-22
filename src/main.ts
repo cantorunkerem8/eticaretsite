@@ -1428,7 +1428,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add click listeners to items
         searchResultsDropdown.querySelectorAll('.search-result-item').forEach(item => {
-          item.addEventListener('click', (e) => {
+          item.addEventListener('click', () => {
             const id = (item as HTMLElement).dataset.id;
             if (id) {
               navigateTo(`/product/${id}`);

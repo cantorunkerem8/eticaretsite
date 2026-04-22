@@ -24,7 +24,7 @@ export function mapShopifyProduct(node: any): Product {
 
   // 1. Check if product belongs to any of our target category collections
   const matchedTarget = targetCategories.find(target => 
-    collections.some(c => c.toLowerCase() === target.toLowerCase())
+    collections.some((c: string) => c.toLowerCase() === target.toLowerCase())
   );
 
   if (matchedTarget) {
