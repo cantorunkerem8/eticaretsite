@@ -89,7 +89,7 @@ ul {
   }
 
   .logo-img {
-    height: 80px;
+    height: 88px;
     width: auto;
     display: block;
     cursor: pointer;
@@ -3698,7 +3698,7 @@ ul {
   /* 1. Header & Nav */
   .main-header {
     height: auto !important;
-    padding: 10px 0 !important;
+    padding: 5px 0 !important;
   }
 
   .main-header .container {
@@ -3735,12 +3735,12 @@ ul {
   }
 
   .logo-img {
-    height: 35px !important;
+    height: 52px !important;
     width: auto !important;
   }
 
   #footer-logo {
-    height: 40px !important;
+    height: 65px !important;
   }
 
   .nav-bar {
