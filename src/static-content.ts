@@ -165,7 +165,7 @@ export const STATIC_PAGES: Record<string, { title: string; content: string }> = 
         
         <h3>8. Contact Us</h3>
         <p>For more information about our privacy practices, if you have questions, or if you would like to make a complaint, please contact us by e-mail at <strong>info@sfuya.com</strong> or by mail using the details provided below:</p>
-        <p><strong>UK: SFUYA LTD, 25 Langton Close, Maidstone, Kent, England, ME14 5PG, UK</strong><br><strong>US: SFUYA LLC, 280 Madison Avenue, New York, NY 10016, USA</strong></p>
+        <p><strong>UK: SFUYA LTD, 25 Langton Close, Maidstone, Kent, England, ME14 5PG, UK</strong><br><strong>US: SFUYA LLC, 1209 Mountain Road PL NE STE 10853, Albuquerque, NM 87110, USA</strong></p>
       </div>
     `
   },
@@ -199,7 +199,7 @@ export const STATIC_PAGES: Record<string, { title: string; content: string }> = 
         
         <h3>9. Contact Information</h3>
         <p>Questions about the Terms of Service should be sent to us at <strong>info@sfuya.com</strong>.</p>
-        <p>UK Office: 25 Langton Close, Maidstone, Kent, England, ME14 5PG, UK<br>US Office: 280 Madison Avenue, New York, NY 10016, USA</p>
+        <p>UK Office: 25 Langton Close, Maidstone, Kent, England, ME14 5PG, UK<br>US Office: 1209 Mountain Road PL NE STE 10853, Albuquerque, NM 87110, USA</p>
       </div>
     `
   },

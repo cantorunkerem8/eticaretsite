@@ -26,6 +26,7 @@ interface AppState {
   collections: any[];
   siteSettings: any;
   shopifyPages: any[];
+  currency: 'GBP' | 'USD' | 'AUD';
 }
 
 interface Coupon {
@@ -48,22 +49,62 @@ const state: AppState = {
   currentCategory: null,
   minPrice: 0,
   maxPrice: Infinity,
-  homeSort: 'default',
+  homeSort: 'best-selling',
   isLoggedIn: !!savedUser,
   cartCount: savedCart.length,
   cartItems: savedCart,
-  favorites: JSON.parse(localStorage.getItem('sfuya_favorites') || '[]').map((f: any) => typeof f === 'string' ? { id: f, addedAt: Date.now() } : f),
-  user: savedUser || {
-    name: null,
-    email: null,
-    picture: null
-  },
-  cookieAccepted: localStorage.getItem('sfuya_cookies') === 'accepted',
+  favorites: JSON.parse(localStorage.getItem('sfuya_favorites') || '[]'),
+  user: savedUser || { name: null, email: null, picture: null },
+  cookieAccepted: localStorage.getItem('sfuya_cookie_consent') === 'true',
   coupons: DUMMY_COUPONS,
-  activeCoupon: JSON.parse(localStorage.getItem('sfuya_active_coupon') || 'null'),
+  activeCoupon: null,
   collections: [],
   siteSettings: null,
-  shopifyPages: []
+  shopifyPages: [],
+  currency: 'GBP'
+};
+
+const EXCHANGE_RATES = {
+  GBP: 1,
+  USD: 1.25,
+  AUD: 1.90
+};
+
+const CURRENCY_SYMBOLS = {
+  GBP: '£',
+  USD: '$',
+  AUD: 'A$'
+};
+
+export function formatPrice(amountInGBP: number): string {
+  const rate = EXCHANGE_RATES[state.currency];
+  const converted = amountInGBP * rate;
+  return `${CURRENCY_SYMBOLS[state.currency]}${converted.toFixed(2)}`;
+}
+
+(window as any).setCurrency = function(code: 'GBP' | 'USD' | 'AUD') {
+  state.currency = code;
+  
+  const flagImg = document.getElementById('active-currency-flag') as HTMLImageElement;
+  const currencyText = document.getElementById('active-currency-text');
+  
+  if (flagImg) {
+    if (code === 'GBP') flagImg.src = 'https://flagcdn.com/w20/gb.png';
+    else if (code === 'USD') flagImg.src = 'https://flagcdn.com/w20/us.png';
+    else if (code === 'AUD') flagImg.src = 'https://flagcdn.com/w20/au.png';
+  }
+  
+  if (currencyText) {
+    currencyText.innerText = code;
+  }
+  
+  // Rerender active views
+  handleRoute();
+  renderCartDrawer();
+  
+  // Hide dropdown
+  const dropdown = document.querySelector('.currency-dropdown-menu') as HTMLElement;
+  if (dropdown) dropdown.classList.remove('active');
 };
 
 // --- ROUTER & VIEW SWITCHING ---
@@ -476,9 +517,9 @@ function renderAllProductsPage(brandFilter?: string, categoryFilter?: string, se
   }
   if (searchFilter) {
     const query = searchFilter.toLowerCase();
-    filteredProducts = filteredProducts.filter(p => 
-      p.name.toLowerCase().includes(query) || 
-      p.category.toLowerCase().includes(query) || 
+    filteredProducts = filteredProducts.filter(p =>
+      p.name.toLowerCase().includes(query) ||
+      p.category.toLowerCase().includes(query) ||
       p.vendor.toLowerCase().includes(query) ||
       (p.description && p.description.toLowerCase().includes(query))
     );
@@ -583,11 +624,11 @@ function renderCollectionsPage() {
       <h1 class="sfuya-page-title">Collections</h1>
       <div class="sfuya-collections-grid">
         ${activeCategories.length === 0 ? '<p>Loading categories...</p>' : activeCategories.map((cat) => {
-          // Find representative image
-          const firstProd = products.find(p => p.category === cat);
-          const img = firstProd?.images[0] || '';
-          
-          return `
+    // Find representative image
+    const firstProd = products.find(p => p.category === cat);
+    const img = firstProd?.images[0] || '';
+
+    return `
             <a href="/all-products?category=${encodeURIComponent(cat)}" class="sfuya-collection-card" onclick="event.preventDefault(); navigateTo('/all-products?category=${encodeURIComponent(cat)}')">
               <div class="sfuya-collection-img">
                 <img src="${img}" alt="${cat}" loading="lazy">
@@ -595,7 +636,7 @@ function renderCollectionsPage() {
               <p class="sfuya-collection-name">${cat}</p>
             </a>
           `;
-        }).join('')}
+  }).join('')}
       </div>
     </div>
   `;
@@ -650,7 +691,7 @@ function renderTopSellingPage(categoryFilter?: string, brandFilter?: string) {
 
   // Since products are already sorted by BEST_SELLING in fetch, we start with the top ones
   let filteredTop = products;
-  
+
   if (categoryFilter) {
     filteredTop = filteredTop.filter(p => p.category === categoryFilter);
   }
@@ -743,9 +784,10 @@ function renderAboutPage() {
         </div>
         <div class="legal-info-box">
           <p><strong>Legal Name:</strong> SFUYA LTD</p>
-          <p><strong>UK Address:</strong> 25 Langton Close, Maidstone, Kent, England, ME14 5PG</p>
-          <p><strong>US Address:</strong> 280 Madison Avenue, New York, NY 10016, USA</p>
-          <p><strong>Warehouse Address:</strong> Aylesford Storage the Coach Works, Old Mill Lane Suite 18, Aylesford, Kent, ME20 7DT</p>
+          <p><strong>Registered Address:</strong> 25 Langton Close, Maidstone, Kent, England, ME14 5PG</p>
+          <p><strong>USA Office:</strong> SFUYA LLC, 1209 Mountain Road PL NE STE 10853, Albuquerque, NM 87110, USA</p>
+          <p><strong>Warehouse Address (UK):</strong> Aylesford Storage the Coach Works, Old Mill Lane Suite 18, Aylesford, Kent, ME20 7DT</p>
+          <p><strong>Warehouse Address (US):</strong> 23 Commerce Road, Unit J #SL15, Fairfield, NJ 07004, USA</p>
           <p><strong>Company Number:</strong> 13367471</p>
           <p><strong>Company Phone:</strong> +44 7462 237144</p>
         </div>
@@ -787,8 +829,8 @@ function renderContactPage() {
           <div class="contact-detail-item">
             <i class="ph ph-map-pin"></i>
             <div>
-              <label>US Office</label>
-              <p>280 Madison Avenue, New York, NY 10016, USA</p>
+              <label>USA Office</label>
+              <p>1209 Mountain Road PL NE STE 10853, Albuquerque, NM 87110</p>
             </div>
           </div>
           <div class="contact-detail-item">
@@ -876,7 +918,7 @@ function createProductCard(product: Product) {
       </div>
       <div class="product-info">
         <h3 class="product-title" onclick="navigateTo('/product/${product.id}')">${product.name}</h3>
-        <p class="product-price">£${product.price.toFixed(2)}</p>
+        <p class="product-price">${formatPrice(product.price)}</p>
       </div>
     </div>
   `;
@@ -937,7 +979,7 @@ function renderPDP(product: Product) {
   document.getElementById('pdp-breadcrumb-name')!.textContent = product.name;
   document.getElementById('pdp-cat')!.textContent = product.category;
   document.getElementById('pdp-title')!.textContent = product.name;
-  document.getElementById('pdp-price')!.textContent = `£${product.price.toFixed(2)}`;
+  document.getElementById('pdp-price')!.textContent = formatPrice(product.price);
   document.getElementById('pdp-desc')!.innerHTML = product.description || "No detailed description available.";
 
   const mainImg = document.getElementById('pdp-main-img') as HTMLImageElement;
@@ -1120,7 +1162,7 @@ function renderCartDrawer() {
       <img src="${item.images[0]}" alt="${item.name}">
       <div class="cart-item-details">
         <h4 class="cart-item-title">${item.name}</h4>
-        <p class="cart-item-price">£${item.price.toFixed(2)}</p>
+        <p class="cart-item-price">${formatPrice(item.price)}</p>
         <div class="qty-controls">
           <button class="qty-btn" onclick="updateCartQty('${item.id}', -1)">-</button>
           <input type="text" value="${item.quantity}" class="qty-input" readonly>
@@ -1136,7 +1178,7 @@ function renderCartDrawer() {
           <div class="coupon-info">
             <i class="ph ph-tag"></i>
             <span class="applied-code">${state.activeCoupon.code}</span>
-            <span class="applied-amount">(-${state.activeCoupon.discountType === 'percentage' ? `${state.activeCoupon.discountValue}%` : `£${state.activeCoupon.discountValue.toFixed(2)}`})</span>
+            <span class="applied-amount">(-${state.activeCoupon.discountType === 'percentage' ? `${state.activeCoupon.discountValue}%` : formatPrice(state.activeCoupon.discountValue)})</span>
           </div>
           <button class="remove-coupon-btn" onclick="removeCoupon()">
             <i class="ph ph-x"></i>
@@ -1220,7 +1262,7 @@ function updateCartTotals() {
         discount = state.activeCoupon.discountValue;
       }
 
-      if (discountEl) discountEl.textContent = `-£${discount.toFixed(2)}`;
+      if (discountEl) discountEl.textContent = `-${formatPrice(discount)}`;
       discountRow?.classList.remove('auth-hidden');
     } else {
       // Coupon no longer valid (e.g. subtotal dropped below minSpend)
@@ -1235,12 +1277,12 @@ function updateCartTotals() {
 
   const grandTotal = subtotal - discount;
 
-  document.getElementById('cart-total-price')!.textContent = `£${grandTotal.toFixed(2)}`;
+  document.getElementById('cart-total-price')!.textContent = formatPrice(grandTotal);
   const summarySubtotal = document.getElementById('summary-subtotal');
-  if (summarySubtotal) summarySubtotal.textContent = `£${subtotal.toFixed(2)}`;
+  if (summarySubtotal) summarySubtotal.textContent = formatPrice(subtotal);
 
   const cartBadgeTotal = document.getElementById('cart-total-badge');
-  if (cartBadgeTotal) cartBadgeTotal.textContent = `£${grandTotal.toFixed(2)}`;
+  if (cartBadgeTotal) cartBadgeTotal.textContent = formatPrice(grandTotal);
 }
 
 async function handleCheckout() {
@@ -1326,7 +1368,7 @@ async function handleCheckout() {
   }
 
   if (subtotal < coupon.minSpend) {
-    showToast(`Minimum spend of £${coupon.minSpend} required for this coupon.`, 'error');
+    showToast(`Minimum spend of ${formatPrice(coupon.minSpend)} required for this coupon.`, 'error');
     return;
   }
 
@@ -1486,6 +1528,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initRouter();
 
+  // Currency Dropdown Logic
+  const currencyTrigger = document.getElementById('currency-selector-trigger');
+  const currencyDropdown = document.querySelector('.currency-dropdown-menu');
+  if (currencyTrigger && currencyDropdown) {
+    currencyTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currencyDropdown.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!currencyTrigger.contains(e.target as Node)) {
+        currencyDropdown.classList.remove('active');
+      }
+    });
+  }
+
   // Search Bar Logic
   const searchInput = document.getElementById('search-input') as HTMLInputElement;
   const searchResultsDropdown = document.getElementById('search-results-dropdown');
@@ -1499,8 +1557,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const filtered = products.filter(p => 
-        p.name.toLowerCase().includes(query) || 
+      const filtered = products.filter(p =>
+        p.name.toLowerCase().includes(query) ||
         p.category.toLowerCase().includes(query) ||
         p.vendor.toLowerCase().includes(query)
       ).slice(0, 8); // Show top 8 results
@@ -1511,7 +1569,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <img src="${p.images[0]}" alt="${p.name}" class="search-result-img">
             <div class="search-result-info">
               <span class="search-result-name">${p.name}</span>
-              <span class="search-result-price">£${p.price.toFixed(2)}</span>
+              <span class="search-result-price">${formatPrice(p.price)}</span>
             </div>
           </div>
         `).join('');

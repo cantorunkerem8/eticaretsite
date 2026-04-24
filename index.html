@@ -180,14 +180,22 @@
         </div>
 
         <div class="header-utils">
-          <div class="currency-selector">
-            <img src="https://flagcdn.com/w20/gb.png" alt="UK Flag">
-            <span class="chevron">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </span>
+          <div class="currency-selector" id="currency-selector-trigger">
+            <div class="active-currency">
+              <img src="https://flagcdn.com/w20/gb.png" alt="UK Flag" id="active-currency-flag">
+              <span id="active-currency-text" style="display:none;">GBP</span>
+              <span class="chevron">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
+            </div>
+            <ul class="currency-dropdown-menu">
+              <li onclick="setCurrency('GBP')"><img src="https://flagcdn.com/w20/gb.png" alt="UK"> GBP (£)</li>
+              <li onclick="setCurrency('USD')"><img src="https://flagcdn.com/w20/us.png" alt="USA"> USD ($)</li>
+              <li onclick="setCurrency('AUD')"><img src="https://flagcdn.com/w20/au.png" alt="AUS"> AUD (A$)</li>
+            </ul>
           </div>
           <div id="auth-container">
             <!-- To be filled by JS -->
@@ -259,7 +267,8 @@
 
           <!-- Main Product Content -->
           <div class="product-listing-content">
-            <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px;">
+            <div class="section-header"
+              style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px;">
               <div>
                 <h2>Featured Collection</h2>
                 <div class="header-line"></div>
@@ -362,10 +371,16 @@
             <h3>You May Also Like</h3>
             <div class="pdp-related-nav">
               <button id="related-prev" class="carousel-nav-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
               </button>
               <button id="related-next" class="carousel-nav-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
               </button>
             </div>
           </div>
@@ -405,7 +420,8 @@
                 <i class="ph-bold ph-envelope-simple"></i>
                 <span id="footer-email-text">info@sfuya.com</span>
               </a>
-              <a href="https://api.whatsapp.com/send?phone=447462237144&text=" target="_blank" class="footer-contact-link" id="footer-whatsapp-link">
+              <a href="https://api.whatsapp.com/send?phone=447462237144&text=" target="_blank"
+                class="footer-contact-link" id="footer-whatsapp-link">
                 <i class="ph-bold ph-whatsapp-logo"></i>
                 <span id="footer-whatsapp-text">WhatsApp Support</span>
               </a>
@@ -417,11 +433,15 @@
               </div>
               <div class="footer-contact-link">
                 <i class="ph-bold ph-map-pin"></i>
-                <span id="footer-address-text-us">US: 280 Madison Ave, NY 10016</span>
+                <span id="footer-address-text-us">US: 1209 Mountain Road PL NE STE 10853, Albuquerque, NM 87110</span>
               </div>
               <div class="footer-contact-link">
                 <i class="ph-bold ph-truck"></i>
-                <span id="footer-warehouse-text">Warehouse: Old Mill Lane Suite 18, Aylesford, ME20 7DT, UK</span>
+                <span id="footer-warehouse-text">UK Depot: Old Mill Lane Suite 18, Aylesford, ME20 7DT</span>
+              </div>
+              <div class="footer-contact-link">
+                <i class="ph-bold ph-truck"></i>
+                <span id="footer-warehouse-text-us">US Depot: 23 Commerce Road, Unit J #SL15, Fairfield, NJ 07004</span>
               </div>
             </div>
           </div>
