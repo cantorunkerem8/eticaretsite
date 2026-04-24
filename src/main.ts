@@ -743,7 +743,8 @@ function renderAboutPage() {
         </div>
         <div class="legal-info-box">
           <p><strong>Legal Name:</strong> SFUYA LTD</p>
-          <p><strong>Registered Address:</strong> 25 Langton Close, Maidstone, Kent, England, ME14 5PG</p>
+          <p><strong>UK Address:</strong> 25 Langton Close, Maidstone, Kent, England, ME14 5PG</p>
+          <p><strong>US Address:</strong> 280 Madison Avenue, New York, NY 10016, USA</p>
           <p><strong>Warehouse Address:</strong> Aylesford Storage the Coach Works, Old Mill Lane Suite 18, Aylesford, Kent, ME20 7DT</p>
           <p><strong>Company Number:</strong> 13367471</p>
           <p><strong>Company Phone:</strong> +44 7462 237144</p>
@@ -779,8 +780,15 @@ function renderContactPage() {
           <div class="contact-detail-item">
             <i class="ph ph-map-pin"></i>
             <div>
-              <label>Office</label>
+              <label>UK Office</label>
               <p>25 Langton Close, Maidstone, Kent, England, ME14 5PG</p>
+            </div>
+          </div>
+          <div class="contact-detail-item">
+            <i class="ph ph-map-pin"></i>
+            <div>
+              <label>US Office</label>
+              <p>280 Madison Avenue, New York, NY 10016, USA</p>
             </div>
           </div>
           <div class="contact-detail-item">
