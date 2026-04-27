@@ -65,6 +65,7 @@ export const GET_PRODUCTS_QUERY = `
             edges {
               node {
                 id
+                availableForSale
                 price {
                   amount
                   currencyCode

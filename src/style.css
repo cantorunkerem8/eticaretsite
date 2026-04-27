@@ -624,12 +624,12 @@ ul {
 
 /* Featured Section */
 .featured {
-  padding: 100px 0;
+  padding: 5px 0 80px 0;
   background: var(--white);
 }
 
 .section-header {
-  margin-bottom: 50px;
+  margin-bottom: 30px;
 }
 
 .section-header h2 {
@@ -799,7 +799,7 @@ ul {
   grid-template-columns: 260px 1fr;
   gap: 60px;
   align-items: flex-start;
-  margin-top: 40px;
+  margin-top: 0;
   width: 100%;
   max-width: 100%;
   padding: 0 40px;
@@ -1038,6 +1038,21 @@ ul {
 .btn-add-cart-naif:hover {
   transform: scale(1.02);
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.sold-out-badge {
+  background: #ff4444;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 10px rgba(255, 68, 68, 0.3);
+}
+
+.product-card .sold-out-badge {
+  z-index: 10;
 }
 
 /* --- PRODUCT DETAIL PAGE (PDP) STYLES --- */

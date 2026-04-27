@@ -911,9 +911,13 @@ function createProductCard(product: Product) {
         </button>
         <img src="${coverImage}" alt="${product.name}" id="img-${product.id}" loading="lazy">
         <div class="card-action-overlay">
-          <button class="add-to-cart-btn" data-id="${product.id}" title="Add to Cart">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-          </button>
+          ${product.available ? `
+            <button class="add-to-cart-btn" data-id="${product.id}" title="Add to Cart">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            </button>
+          ` : `
+            <span class="sold-out-badge">SOLD OUT</span>
+          `}
         </div>
       </div>
       <div class="product-info">
@@ -1025,7 +1029,18 @@ function renderPDP(product: Product) {
   qtyInput.value = "1";
   document.getElementById('pdp-plus')!.onclick = () => { qtyInput.value = (parseInt(qtyInput.value) + 1).toString(); };
   document.getElementById('pdp-minus')!.onclick = () => { if (parseInt(qtyInput.value) > 1) qtyInput.value = (parseInt(qtyInput.value) - 1).toString(); };
-  document.getElementById('pdp-add-to-cart')!.onclick = () => addToCart(product, parseInt(qtyInput.value));
+  
+  const pdpAddToCartBtn = document.getElementById('pdp-add-to-cart') as HTMLButtonElement;
+  if (product.available) {
+    pdpAddToCartBtn.disabled = false;
+    pdpAddToCartBtn.textContent = 'ADD TO CART';
+    pdpAddToCartBtn.onclick = () => addToCart(product, parseInt(qtyInput.value));
+  } else {
+    pdpAddToCartBtn.disabled = true;
+    pdpAddToCartBtn.textContent = 'SOLD OUT';
+    pdpAddToCartBtn.style.opacity = '0.5';
+    pdpAddToCartBtn.style.cursor = 'not-allowed';
+  }
 
   // Breadcrumb back
   const backBtn = document.querySelector('.back-link') as HTMLElement;
@@ -1315,18 +1330,8 @@ async function handleCheckout() {
 
     const cart = data.cartCreate.cart;
     if (cart && cart.checkoutUrl) {
-      // ROBUST REDIRECT: Ensure we ALWAYS go to the myshopify domain to break out of the SPA 404 loop
-      let forcedCheckoutUrl = cart.checkoutUrl;
-      if (forcedCheckoutUrl.startsWith('/')) {
-        forcedCheckoutUrl = `https://cd3889.myshopify.com${forcedCheckoutUrl}`;
-      } else {
-        forcedCheckoutUrl = forcedCheckoutUrl
-          .replace('www.sfuya.com', 'cd3889.myshopify.com')
-          .replace('sfuya.com', 'cd3889.myshopify.com');
-      }
-
-      console.log('Cart created successfully! Breaking loop and redirecting to:', forcedCheckoutUrl);
-      window.location.href = forcedCheckoutUrl;
+      console.log('Cart created successfully! Redirecting to checkout:', cart.checkoutUrl);
+      window.location.href = cart.checkoutUrl;
     } else {
       throw new Error("Checkout URL not found in cart response");
     }
