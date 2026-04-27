@@ -27,7 +27,7 @@ export function mapShopifyProduct(node: any): Product {
   const hasSuperox = collections.some((c: string) => c.toLowerCase().includes('superox')) || (node.productType && node.productType.toLowerCase().includes('superox'));
   
   if (hasSuperox) {
-    category = 'Beauty';
+    category = 'Pet';
   } else {
     // 2. Check if product belongs to any of our target category collections
     const matchedTarget = targetCategories.find(target => 

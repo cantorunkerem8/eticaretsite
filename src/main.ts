@@ -98,6 +98,13 @@ export function formatPrice(amountInGBP: number): string {
     currencyText.innerText = code;
   }
   
+  // Update price range placeholders
+  const symbol = CURRENCY_SYMBOLS[code];
+  const minPriceInput = document.getElementById('min-price') as HTMLInputElement;
+  const maxPriceInput = document.getElementById('max-price') as HTMLInputElement;
+  if (minPriceInput) minPriceInput.placeholder = `Min (${symbol})`;
+  if (maxPriceInput) maxPriceInput.placeholder = `Max (${symbol})`;
+
   // Rerender active views
   handleRoute();
   renderCartDrawer();
@@ -570,7 +577,7 @@ function renderAllProductsPage(brandFilter?: string, categoryFilter?: string, se
             <div class="range-handle left"></div>
             <div class="range-handle right"></div>
           </div>
-          <p class="price-range-text">Price: £0 — £150</p>
+          <p class="price-range-text">Price: ${CURRENCY_SYMBOLS[state.currency]}0 — ${CURRENCY_SYMBOLS[state.currency]}150</p>
           <button class="btn btn-outline-naif btn-small">FILTER</button>
         </div>
 
@@ -761,9 +768,13 @@ function renderAboutPage() {
     </div>
     <div class="container">
       <div class="about-page-content">
-        <div class="about-section">
           <h3>Elevating Digital Lifestyle</h3>
           <p>SFUYA is a premium technology accessories marketplace based in the United Kingdom. We curate only the highest quality products from global brands to ensure your devices are protected, powered, and complemented by timeless aesthetics.</p>
+          <div style="margin-top: 20px;">
+            <a href="https://www.ebay.co.uk/usr/sfuyashop" target="_blank" class="btn btn-outline-naif" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 0.85rem;">
+              <i class="ph ph-shopping-cart"></i> Visit Our eBay Store
+            </a>
+          </div>
         </div>
         <div class="about-grid">
           <div class="about-box">
