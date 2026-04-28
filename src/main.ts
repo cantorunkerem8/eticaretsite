@@ -770,9 +770,9 @@ function renderAboutPage() {
       <div class="about-page-content">
           <h3>Elevating Digital Lifestyle</h3>
           <p>SFUYA is a premium technology accessories marketplace based in the United Kingdom. We curate only the highest quality products from global brands to ensure your devices are protected, powered, and complemented by timeless aesthetics.</p>
-          <div style="margin-top: 20px;">
-            <a href="https://www.ebay.co.uk/usr/sfuyashop" target="_blank" class="btn btn-outline-naif" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 0.85rem;">
-              <i class="ph ph-shopping-cart"></i> Visit Our eBay Store
+          <div style="margin-top: 30px; margin-bottom: 20px; text-align: left;">
+            <a href="https://www.ebay.co.uk/usr/sfuyashop" target="_blank" class="btn-ebay-global btn-ebay-large" style="margin: 0; max-width: 300px;">
+              <i class="ph-bold ph-shopping-cart ebay-cart-anim" style="font-size: 1.3em;"></i> VISIT EBAY STORE
             </a>
           </div>
         </div>
@@ -1053,6 +1053,14 @@ function renderPDP(product: Product) {
     pdpAddToCartBtn.style.cursor = 'not-allowed';
   }
 
+  const pdpEbayBtn = document.getElementById('pdp-ebay-btn') as HTMLAnchorElement;
+  if (product.ebayLink) {
+    pdpEbayBtn.href = product.ebayLink;
+    pdpEbayBtn.style.display = 'flex';
+  } else {
+    pdpEbayBtn.style.display = 'none';
+  }
+
   // Breadcrumb back
   const backBtn = document.querySelector('.back-link') as HTMLElement;
   if (backBtn) {
@@ -1177,7 +1185,7 @@ function renderCartDrawer() {
       <div class="empty-cart-msg">
         <i class="ph ph-shopping-bag"></i>
         <p>Your cart is empty</p>
-        <a href="/all-products" class="btn btn-primary" onclick="event.preventDefault(); toggleCart(); navigateTo('/all-products')">START SHOPPING</a>
+        <a href="/" class="btn btn-primary" onclick="event.preventDefault(); document.getElementById('cart-drawer-overlay').classList.add('auth-hidden'); document.body.style.overflow = ''; navigateTo('/')">START SHOPPING</a>
       </div>
     `;
     updateCartTotals();

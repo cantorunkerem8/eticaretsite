@@ -14,8 +14,10 @@ export const STATIC_PAGES: Record<string, { title: string; content: string }> = 
         <h3>Digital Excellence</h3>
         <p>From the tactile click of our premium keyboards to the soft touch of our minimalist desk mats, SFUYA is dedicated to elevating your digital workspace. We don't just sell products; we offer an experience that fuels creativity and precision engineering.</p>
 
-        <div style="margin-top: 30px; text-align: center;">
-          <a href="https://www.ebay.co.uk/usr/sfuyashop" target="_blank" style="display: inline-block; padding: 12px 25px; background: #000; color: #fff; text-decoration: none; border-radius: 30px; font-weight: 600;">Visit Our eBay Store</a>
+        <div style="margin-top: 40px; margin-bottom: 20px; text-align: center;">
+          <a href="https://www.ebay.co.uk/usr/sfuyashop" target="_blank" class="btn-ebay-global btn-ebay-large">
+            <i class="ph-bold ph-shopping-cart ebay-cart-anim" style="font-size: 1.3em;"></i> VISIT EBAY STORE
+          </a>
         </div>
       </div>
     `
@@ -57,6 +59,12 @@ export const STATIC_PAGES: Record<string, { title: string; content: string }> = 
               <p style="margin-top: 15px; font-weight: 600;">Tel: +44 7462 237144</p>
             </div>
           </div>
+        </div>
+
+        <div style="margin-top: 40px; margin-bottom: 20px; text-align: center; width: 100%;">
+          <a href="https://www.ebay.co.uk/usr/sfuyashop" target="_blank" class="btn-ebay-global btn-ebay-large">
+            <i class="ph-bold ph-shopping-cart ebay-cart-anim" style="font-size: 1.3em;"></i> VISIT EBAY STORE
+          </a>
         </div>
       </div>
     `

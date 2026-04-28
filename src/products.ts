@@ -8,6 +8,7 @@ export interface Product {
   vendor: string; // Brand/manufacturer name
   available: boolean;
   shopifyVariantId?: string; // Needed for checkout
+  ebayLink?: string;
 }
 
 export let products: Product[] = [];
@@ -27,7 +28,8 @@ export function mapShopifyProduct(node: any): Product {
   const hasSuperox = collections.some((c: string) => c.toLowerCase().includes('superox')) || (node.productType && node.productType.toLowerCase().includes('superox'));
   
   if (hasSuperox) {
-    category = 'Pet';
+    const isAnimal = node.title.toLowerCase().includes('animal') || node.title.toLowerCase().includes('pet');
+    category = isAnimal ? 'Pet' : 'Beauty';
   } else {
     // 2. Check if product belongs to any of our target category collections
     const matchedTarget = targetCategories.find(target => 
@@ -60,7 +62,8 @@ export function mapShopifyProduct(node: any): Product {
     description: node.description,
     vendor: node.vendor || 'SFUYA',
     available: (typeof node.totalInventory === 'number') ? node.totalInventory > 0 : (node.availableForSale ?? (node.variants.edges[0]?.node.availableForSale ?? true)),
-    shopifyVariantId: node.variants.edges[0]?.node.id
+    shopifyVariantId: node.variants.edges[0]?.node.id,
+    ebayLink: node.metafield?.value || undefined
   };
 }
 

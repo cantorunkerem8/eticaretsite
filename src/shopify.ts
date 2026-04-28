@@ -49,6 +49,9 @@ export const GET_PRODUCTS_QUERY = `
           vendor
           availableForSale
           totalInventory
+          metafield(namespace: "custom", key: "ebay_link") {
+            value
+          }
           collections(first: 10) {
             edges {
               node {
