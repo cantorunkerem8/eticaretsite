@@ -59,7 +59,7 @@ export function mapShopifyProduct(node: any): Product {
     images: node.images.edges.map((e: any) => e.node.url),
     description: node.description,
     vendor: node.vendor || 'SFUYA',
-    available: node.variants.edges[0]?.node.availableForSale ?? true,
+    available: (typeof node.totalInventory === 'number') ? node.totalInventory > 0 : (node.availableForSale ?? (node.variants.edges[0]?.node.availableForSale ?? true)),
     shopifyVariantId: node.variants.edges[0]?.node.id
   };
 }

@@ -47,6 +47,8 @@ export const GET_PRODUCTS_QUERY = `
           description
           productType
           vendor
+          availableForSale
+          totalInventory
           collections(first: 10) {
             edges {
               node {
