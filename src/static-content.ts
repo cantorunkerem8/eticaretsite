@@ -16,7 +16,7 @@ export const STATIC_PAGES: Record<string, { title: string; content: string }> = 
 
         <div style="margin-top: 40px; margin-bottom: 20px; text-align: center;">
           <a href="https://www.ebay.co.uk/usr/sfuyashop" target="_blank" class="btn-ebay-global btn-ebay-large">
-            <i class="ph-bold ph-shopping-cart ebay-cart-anim" style="font-size: 1.3em;"></i> VISIT EBAY STORE
+            <i class="ph-bold ph-shopping-cart ebay-cart-anim" style="font-size: 1.3em;"></i> VISIT EBAY UK STORE
           </a>
         </div>
       </div>
@@ -63,7 +63,7 @@ export const STATIC_PAGES: Record<string, { title: string; content: string }> = 
 
         <div style="margin-top: 40px; margin-bottom: 20px; text-align: center; width: 100%;">
           <a href="https://www.ebay.co.uk/usr/sfuyashop" target="_blank" class="btn-ebay-global btn-ebay-large">
-            <i class="ph-bold ph-shopping-cart ebay-cart-anim" style="font-size: 1.3em;"></i> VISIT EBAY STORE
+            <i class="ph-bold ph-shopping-cart ebay-cart-anim" style="font-size: 1.3em;"></i> VISIT EBAY UK STORE
           </a>
         </div>
       </div>
