@@ -770,11 +770,7 @@ function renderAboutPage() {
       <div class="about-page-content">
           <h3>Elevating Digital Lifestyle</h3>
           <p>SFUYA is a premium technology accessories marketplace based in the United Kingdom. We curate only the highest quality products from global brands to ensure your devices are protected, powered, and complemented by timeless aesthetics.</p>
-          <div style="margin-top: 30px; margin-bottom: 20px; text-align: left;">
-            <a href="https://www.ebay.co.uk/usr/sfuyashop" target="_blank" class="btn-ebay-global btn-ebay-large" style="margin: 0; max-width: 300px;">
-              <i class="ph-bold ph-shopping-cart ebay-cart-anim" style="font-size: 1.3em;"></i> VISIT EBAY UK STORE
-            </a>
-          </div>
+
         </div>
         <div class="about-grid">
           <div class="about-box">

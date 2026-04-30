@@ -14,11 +14,7 @@ export const STATIC_PAGES: Record<string, { title: string; content: string }> = 
         <h3>Digital Excellence</h3>
         <p>From the tactile click of our premium keyboards to the soft touch of our minimalist desk mats, SFUYA is dedicated to elevating your digital workspace. We don't just sell products; we offer an experience that fuels creativity and precision engineering.</p>
 
-        <div style="margin-top: 40px; margin-bottom: 20px; text-align: center;">
-          <a href="https://www.ebay.co.uk/usr/sfuyashop" target="_blank" class="btn-ebay-global btn-ebay-large">
-            <i class="ph-bold ph-shopping-cart ebay-cart-anim" style="font-size: 1.3em;"></i> VISIT EBAY UK STORE
-          </a>
-        </div>
+
       </div>
     `
   },
@@ -61,11 +57,7 @@ export const STATIC_PAGES: Record<string, { title: string; content: string }> = 
           </div>
         </div>
 
-        <div style="margin-top: 40px; margin-bottom: 20px; text-align: center; width: 100%;">
-          <a href="https://www.ebay.co.uk/usr/sfuyashop" target="_blank" class="btn-ebay-global btn-ebay-large">
-            <i class="ph-bold ph-shopping-cart ebay-cart-anim" style="font-size: 1.3em;"></i> VISIT EBAY UK STORE
-          </a>
-        </div>
+
       </div>
     `
   },
