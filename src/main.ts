@@ -5,6 +5,8 @@ import type { Product } from './products'
 import { STATIC_PAGES } from './static-content'
 import { fetchShopify, GET_PRODUCTS_QUERY, CREATE_CART_MUTATION, GET_COLLECTIONS_QUERY, GET_SITE_SETTINGS_QUERY, GET_PAGES_QUERY } from './shopify'
 
+let isFirstLoad = true;
+
 // --- STATE MANAGEMENT ---
 interface AppState {
   currentCategory: string | null;
@@ -140,6 +142,13 @@ function navigateTo(path: string) {
 (window as any).navigateTo = navigateTo;
 
 function handleRoute() {
+  if (typeof (window as any).fbq === 'function') {
+    if (isFirstLoad) {
+      isFirstLoad = false;
+    } else {
+      (window as any).fbq('track', 'PageView');
+    }
+  }
   let path = window.location.pathname.toLowerCase().trim();
   // Normalize path to handle Shopify's /pages/ prefix
   if (path.startsWith('/pages/')) {
@@ -986,6 +995,16 @@ function attachProductCardListeners() {
 }
 
 function renderPDP(product: Product) {
+  if (typeof (window as any).fbq === 'function') {
+    (window as any).fbq('track', 'ViewContent', {
+      content_ids: [product.id],
+      content_name: product.name,
+      content_category: product.category,
+      content_type: 'product',
+      value: product.price,
+      currency: state.currency
+    });
+  }
   document.getElementById('pdp-breadcrumb-cat')!.textContent = product.category;
   document.getElementById('pdp-breadcrumb-name')!.textContent = product.name;
   document.getElementById('pdp-cat')!.textContent = product.category;
@@ -1261,6 +1280,17 @@ function addToCart(product: Product, qty: number = 1) {
     state.cartItems.push({ ...product, quantity: qty });
   }
 
+  if (typeof (window as any).fbq === 'function') {
+    (window as any).fbq('track', 'AddToCart', {
+      content_ids: [product.id],
+      content_name: product.name,
+      content_category: product.category,
+      content_type: 'product',
+      value: product.price * qty,
+      currency: state.currency
+    });
+  }
+
   state.cartCount = state.cartItems.reduce((acc, item) => acc + item.quantity, 0);
   localStorage.setItem('sfuya_cart', JSON.stringify(state.cartItems));
 
@@ -1319,6 +1349,15 @@ async function handleCheckout() {
   if (state.cartItems.length === 0) {
     showToast("Your cart is empty!", 'error');
     return;
+  }
+
+  if (typeof (window as any).fbq === 'function') {
+    (window as any).fbq('track', 'InitiateCheckout', {
+      content_ids: state.cartItems.map(item => item.id),
+      content_type: 'product',
+      value: state.cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0),
+      currency: state.currency
+    });
   }
 
   showToast("Preparing your secure checkout...", 'success');
