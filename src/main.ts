@@ -158,6 +158,45 @@ function handleRoute() {
     path = path.slice(0, -1);
   }
 
+  // Shopify compatibility redirects for ads and SEO links
+  if (path.startsWith('/products/')) {
+    path = path.replace('/products/', '/product/');
+  }
+
+  if (path.startsWith('/collections/') && path !== '/collections/all') {
+    const collectionHandle = path.replace('/collections/', '');
+    const categories = Array.from(new Set(products.map(p => p.category)));
+    const matchedCategory = categories.find(cat => cat.toLowerCase().replace(/[^a-z0-9]/g, '-') === collectionHandle);
+    if (matchedCategory) {
+      navigateTo(`/all-products?category=${encodeURIComponent(matchedCategory)}`);
+      return;
+    } else {
+      navigateTo('/all-products');
+      return;
+    }
+  }
+
+  if (path === '/cart' || path === '/checkout') {
+    window.history.replaceState({}, '', '/');
+    const homeView = document.getElementById('home-view');
+    const productView = document.getElementById('product-view');
+    const staticView = document.getElementById('static-view');
+    const dynamicView = document.getElementById('dynamic-view');
+    homeView?.classList.remove('auth-hidden');
+    productView?.classList.add('auth-hidden');
+    staticView?.classList.add('auth-hidden');
+    dynamicView?.classList.add('auth-hidden');
+    
+    setTimeout(() => {
+      const cartOverlay = document.getElementById('cart-drawer-overlay');
+      if (cartOverlay) {
+        cartOverlay.classList.remove('auth-hidden');
+        document.body.style.overflow = 'hidden';
+      }
+    }, 100);
+    return;
+  }
+
   const slug = path.startsWith('/') ? path.substring(1) : path;
 
   const homeView = document.getElementById('home-view');
